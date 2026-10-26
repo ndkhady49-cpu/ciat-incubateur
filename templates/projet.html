@@ -1,0 +1,27 @@
+{% extends "layout.html" %}{% block c %}
+<div class="rw" style="align-items:center"><h1>{{ p.title }}</h1><div style="text-align:right">
+<span class="tg {% if p.status == 'accepte' %}ok{% elif p.status == 'refuse' %}ko{% endif %}">{{ p.get_status_display }}</span>
+<a class="bt b2" href="{% url 'fiche_pdf' p.pk %}">Fiche PDF</a>
+{% if user.role == 'porteur' and p.editable %}<a class="bt" href="{% url 'projet_modifier' p.pk %}">Modifier</a>{% endif %}</div></div>
+<div class="rw"><div class="cd"><h2>Dossier</h2><p class="sm">{{ p.owner.nom }} · {{ p.domain }} · cohorte {{ p.cohort }}{% if p.mentor %} · mentor : {{ p.mentor.nom }}{% endif %}</p>
+<label>Problème</label><p>{{ p.problem|default:"-" }}</p><label>Solution</label><p>{{ p.solution|default:"-" }}</p>
+{% if p.file %}<p><a href="{% url 'fichier' p.pk %}">Télécharger la pièce jointe</a></p>{% endif %}
+{% if p.ia_used %}<p class="sm">Ce dossier contient du texte rédigé avec l'aide d'une IA, relu et validé par le porteur.</p>{% endif %}</div>
+<div class="cd"><h2>Complétude</h2><div class="ln"><i style="width:{{ pc }}%"></i></div><p>{{ pc }} %</p>
+{% for m in manque %}<span class="tg ko">{{ m }} manquant</span> {% endfor %}</div></div>
+<div class="rw"><div class="cd"><h2>Évaluations</h2>
+{% for e in evals %}<p><b>{{ e.total }}/20</b> · <span class="tg">{{ e.get_decision_display }}</span> · {{ e.evaluator.nom }}<br><span class="sm">{{ e.motivation }}</span></p>{% empty %}<p class="sm">Pas encore évalué.</p>{% endfor %}
+{% if user.role == 'comite' or user.role == 'coordo' %}<form method="post" action="{% url 'evaluer' p.pk %}">{% csrf_token %}
+{% include "partials/champs.html" with form=eval_form %}<p style="margin-top:14px"><button>Enregistrer la décision</button></p></form>{% endif %}</div>
+<div class="cd"><h2>Suivi et jalons</h2>
+{% if user.role == 'coordo' and p.status == 'accepte' %}<form class="inl" method="post" action="{% url 'affecter' p.pk %}">{% csrf_token %}
+<div><label>Mentor</label><select name="mentor_id">{% for m in mentors %}<option value="{{ m.pk }}" {% if m.pk == p.mentor_id %}selected{% endif %}>{{ m.nom }}</option>{% endfor %}</select></div><button>Affecter</button></form>{% endif %}
+{% for j in jalons %}<div style="border-top:1px solid #E9DCCB;padding:8px 0"><b>{{ j.title }}</b> · {{ j.due|date:"d/m/Y" }}
+<span class="tg {% if j.status == 'valide' %}ok{% elif j.en_retard %}ko{% endif %}">{% if j.en_retard %}en retard{% else %}{{ j.get_status_display }}{% endif %}</span>
+{% if j.comment %}<br><span class="sm">{{ j.comment }}</span>{% endif %}
+{% if user.role == 'coordo' or user.role == 'mentor' %}<form class="inl" method="post" action="{% url 'jalon_maj' j.pk %}">{% csrf_token %}
+<select name="status" style="width:auto">{% for v, l in jalon_statuts %}<option value="{{ v }}" {% if v == j.status %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+<input name="comment" placeholder="Commentaire" value="{{ j.comment }}" style="flex:1"><button class="b2">OK</button></form>{% endif %}</div>
+{% empty %}<p class="sm">Aucun jalon défini.</p>{% endfor %}
+{% if user.role == 'coordo' or user.role == 'mentor' %}<form class="inl" method="post" action="{% url 'jalon_ajout' p.pk %}">{% csrf_token %}
+<div style="flex:1"><label>Nouveau jalon</label><input name="title" required></div><div><label>Échéance</label><input type="date" name="due" required></div><button>Ajouter</button></form>{% endif %}</div></div>{% endblock %}

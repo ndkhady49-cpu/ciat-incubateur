@@ -1,0 +1,9 @@
+{% extends "layout.html" %}{% block c %}<h1>Assistant de rédaction</h1>
+<p class="sm">L'IA propose, vous décidez : aucun texte n'est enregistré sans votre validation. Ne saisissez pas de données personnelles sensibles.</p>
+<div class="rw"><form class="cd" method="post">{% csrf_token %}<label>Mon texte</label><textarea name="texte" rows="7" required>{{ texte }}</textarea>
+<label>Que faire ?</label><select name="mode">{% for k in modes %}<option value="{{ k }}" {% if k == mode %}selected{% endif %}>{{ k|capfirst }}</option>{% endfor %}</select><p><button style="margin-top:12px">Générer une suggestion</button></p></form>
+{% if sug %}<form class="cd" method="post" action="{% url 'ia_accepter' %}">{% csrf_token %}<label>Suggestion ({% if src == 'IA' %}générée par IA{% else %}mode démonstration, aucune clé API configurée{% endif %}) - modifiable</label>
+<textarea name="texte" rows="7">{{ sug }}</textarea>
+<label>Enregistrer dans mon projet</label><select name="project_id">{% for m in mes %}<option value="{{ m.pk }}">{{ m.title }}</option>{% endfor %}</select>
+<label>Champ</label><select name="champ"><option value="problem">Problème</option><option value="solution">Solution</option></select>
+<p><button style="margin-top:12px" {% if not mes %}disabled{% endif %}>Valider et enregistrer</button></p></form>{% endif %}</div>{% endblock %}

@@ -1,0 +1,5 @@
+{% extends "layout.html" %}{% block c %}
+<h1>{% if p %}Modifier mon dossier{% else %}Déposer mon dossier{% endif %}</h1>
+<form class="cd" method="post" enctype="multipart/form-data">{% csrf_token %}{% include "partials/champs.html" %}
+{% if p and p.file %}<p class="sm">Une pièce jointe est déjà enregistrée ; en choisir une nouvelle la remplacera.</p>{% endif %}
+<p style="margin-top:14px"><button>Enregistrer</button> <a class="bt b2" href="{% url 'projets' %}">Annuler</a> <a class="bt b2" href="{% url 'ia' %}">Aide de l'IA</a></p></form>{% endblock %}

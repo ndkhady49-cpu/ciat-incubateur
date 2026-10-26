@@ -1,0 +1,6 @@
+{% extends "layout.html" %}{% block c %}
+<div class="cd" style="max-width:440px;margin:20px auto;width:100%">
+<h1>{% if mode == 'login' %}Connexion{% else %}Créer un compte porteur de projet{% endif %}</h1>
+<form method="post">{% csrf_token %}{% include "partials/champs.html" %}
+<p><button style="width:100%;margin-top:14px">{% if mode == 'login' %}Se connecter{% else %}Créer mon compte{% endif %}</button></p></form>
+<p class="sm" style="text-align:center">{% if mode == 'login' %}<a href="{% url 'register' %}">Pas de compte ? Créer un compte</a>{% else %}<a href="{% url 'login' %}">Déjà inscrit ? Se connecter</a>{% endif %}</p></div>{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "layout.html" %}{% block c %}
+<div class="rw" style="align-items:center"><h1>{% if user.role == 'porteur' %}Mon dossier{% else %}Projets{% endif %}</h1>
+{% if user.role == 'porteur' %}<div style="text-align:right"><a class="bt" href="{% url 'projet_nouveau' %}">+ Déposer un dossier</a></div>{% endif %}</div>
+<div class="cd" style="overflow-x:auto"><table><tr><th>Titre</th><th>Porteur</th><th>Domaine</th><th>Cohorte</th><th>Statut</th></tr>
+{% for p in rows %}<tr><td><a href="{% url 'projet' p.pk %}">{{ p.title }}</a></td><td>{{ p.owner.nom }}</td><td>{{ p.domain }}</td><td>{{ p.cohort }}</td>
+<td><span class="tg {% if p.status == 'accepte' %}ok{% elif p.status == 'refuse' %}ko{% endif %}">{{ p.get_status_display }}</span></td></tr>
+{% empty %}<tr><td colspan="5" class="sm">Aucun projet pour le moment.</td></tr>{% endfor %}</table></div>{% endblock %}

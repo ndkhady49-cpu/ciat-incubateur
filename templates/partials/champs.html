@@ -1,0 +1,1 @@
+{% for f in form %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% for e in f.errors %}<div class="sm err">{{ e }}</div>{% endfor %}{% endfor %}{% for e in form.non_field_errors %}<div class="fl">{{ e }}</div>{% endfor %}
