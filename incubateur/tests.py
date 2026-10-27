@@ -5,11 +5,12 @@ import os
 import tempfile
 from unittest import mock
 
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from .models import Commentaire, CompteRendu, Document, Jalon, Projet, Suivi, User
+from .models import Commentaire, CompteRendu, Document, Jalon, Projet, Suivi, User, cohorte_courante
 
 DONNEES = {"title": "Test projet", "domain": "TIC, numérique, IA et données", "problem": "pb", "solution": "sol"}
 
@@ -172,3 +173,108 @@ class SuiviTests(TestCase):
         wb_bytes = self.client.get(reverse("export_xlsx")).content
         from openpyxl import load_workbook
         self.assertEqual(load_workbook(io.BytesIO(wb_bytes)).sheetnames, ["Projets", "Jalons", "Suivis 3-6 mois"])
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class AuditTests(TestCase):
+    """Correctifs de l'audit : connexion limitée, mot de passe, cohérence, cohortes, quotas IA, mise en production."""
+
+    def setUp(self):
+        cache.clear()
+
+        def mk(e, r):
+            return User.objects.create_user(username=e, email=e, password="Passw0rd!", first_name=e, role=r)
+        self.porteur, self.comite = mk("p@x.sn", "porteur"), mk("c@x.sn", "comite")
+        self.coordo, self.mentor = mk("co@x.sn", "coordo"), mk("m@x.sn", "mentor")
+
+    def test_connexion_bloquee_apres_5_echecs(self):
+        for _ in range(5):
+            self.client.post(reverse("login"), {"username": "p@x.sn", "password": "mauvais"})
+        r = self.client.post(reverse("login"), {"username": "p@x.sn", "password": "Passw0rd!"})
+        self.assertEqual(r.status_code, 429)
+        self.assertContains(r, "Trop de tentatives", status_code=429)
+        cache.clear()
+        r = self.client.post(reverse("login"), {"username": "P@x.sn ", "password": "Passw0rd!"})
+        self.assertEqual(r.status_code, 302)
+
+    def test_changement_mot_de_passe(self):
+        self.client.force_login(self.porteur)
+        self.client.post(reverse("mot_de_passe"), {"old_password": "Passw0rd!", "new_password1": "Baobab-Diamniadio-26",
+                                                   "new_password2": "Baobab-Diamniadio-26"})
+        self.porteur.refresh_from_db()
+        self.assertTrue(self.porteur.check_password("Baobab-Diamniadio-26"))
+
+    def test_refus_retire_le_mentor(self):
+        p = Projet.objects.create(owner=self.porteur, title="T", domain="TIC, numérique, IA et données",
+                                  status="accepte", mentor=self.mentor)
+        self.client.force_login(self.comite)
+        self.client.post(reverse("evaluer", args=[p.pk]), {"innovation": 1, "faisabilite": 1, "impact": 1, "equipe": 1,
+                                                           "decision": "refuse", "motivation": "Non viable"})
+        p.refresh_from_db()
+        self.assertEqual((p.status, p.mentor), ("refuse", None))
+
+    def test_cohorte_par_defaut_et_modification(self):
+        p = Projet.objects.create(owner=self.porteur, title="T", domain="TIC, numérique, IA et données")
+        self.assertEqual(p.cohort, cohorte_courante())
+        self.client.force_login(self.porteur)
+        self.assertEqual(self.client.post(reverse("cohorte", args=[p.pk]), {"cohort": "2027-A"}).status_code, 403)
+        self.client.force_login(self.coordo)
+        self.client.post(reverse("cohorte", args=[p.pk]), {"cohort": "n'importe quoi"})
+        self.client.post(reverse("cohorte", args=[p.pk]), {"cohort": "2027-A"})
+        p.refresh_from_db()
+        self.assertEqual(p.cohort, "2027-A")
+
+    @override_settings(IA_APPELS_PAR_HEURE=2)
+    def test_quota_ia(self):
+        self.client.force_login(self.porteur)
+        with mock.patch.dict(os.environ):
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+            for _ in range(2):
+                self.assertContains(self.client.post(reverse("ia"), {"texte": "Idée", "mode": "pitch"}), "Problème : Idée")
+            r = self.client.post(reverse("ia"), {"texte": "Idée", "mode": "pitch"})
+        self.assertContains(r, "Limite d&#x27;utilisation")
+        self.assertNotContains(r, "Problème : Idée")
+
+    def test_init_coordo_et_seed_demo(self):
+        from django.core.management import call_command
+        env = {"CIAT_ADMIN_EMAIL": "Direction@ciat.sn", "CIAT_ADMIN_PASSWORD": "Baobab-Diamniadio-26"}
+        with mock.patch.dict(os.environ, env):
+            call_command("init_coordo", stdout=io.StringIO())
+            call_command("init_coordo", stdout=io.StringIO())  # idempotent
+        admin = User.objects.get(username="direction@ciat.sn")
+        self.assertTrue(admin.is_superuser and admin.role == "coordo")
+        with mock.patch.dict(os.environ):
+            os.environ.pop("DEMO_PASSWORD", None)
+            call_command("seed", stdout=io.StringIO())  # DEBUG=False en test : refus sans mot de passe
+        self.assertFalse(User.objects.filter(username="coordo@ciat.sn").exists())
+        with mock.patch.dict(os.environ, {"DEMO_PASSWORD": "Jury-CIAT-2026!"}):
+            call_command("seed", stdout=io.StringIO())
+        demo = User.objects.get(username="coordo@ciat.sn")
+        self.assertTrue(demo.check_password("Jury-CIAT-2026!"))
+        self.assertFalse(demo.is_staff or demo.is_superuser)
+        self.assertEqual(Projet.objects.filter(owner__username__endswith="@exemple.sn").exists(), True)
+        call_command("seed", "--supprimer", stdout=io.StringIO())
+        self.assertFalse(User.objects.filter(username__in=["coordo@ciat.sn", "porteur3@exemple.sn"]).exists())
+        self.assertTrue(User.objects.filter(username="direction@ciat.sn").exists())
+        self.assertTrue(User.objects.filter(username="p@x.sn").exists())
+
+    def test_pages_erreur(self):
+        self.client.force_login(self.porteur)
+        self.assertContains(self.client.get(reverse("dashboard")), "Accès refusé", status_code=403)
+        self.assertContains(self.client.get("/nexiste-pas/"), "Page introuvable", status_code=404)
+
+    def test_reglages_production(self):
+        import subprocess
+        import sys
+        code = ("import django, os; os.environ['DJANGO_SETTINGS_MODULE']='config.settings'; django.setup(); "
+                "from django.conf import settings as s; "
+                "print(s.DATABASES['default']['ENGINE'], s.STORAGES['default']['BACKEND'], "
+                "s.STORAGES['default']['OPTIONS']['default_acl'])")
+        env = dict(os.environ, DJANGO_DEBUG="0", DJANGO_SECRET_KEY="x" * 50,
+                   DATABASE_URL="postgres://u:p@ep-test.eu-west-2.aws.neon.tech/ciat", R2_BUCKET="ciat",
+                   R2_ENDPOINT="https://compte.r2.cloudflarestorage.com", R2_ACCESS_KEY_ID="a", R2_SECRET_ACCESS_KEY="b")
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+        self.assertEqual(out.stdout.split(), ["django.db.backends.postgresql", "storages.backends.s3.S3Storage", "None"])
+        env.pop("DJANGO_SECRET_KEY")
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+        self.assertIn("DJANGO_SECRET_KEY est obligatoire", out.stderr)

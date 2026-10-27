@@ -2,7 +2,7 @@
 import datetime as dt
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 
 DOMAINES = ["TIC, numérique, IA et données", "Mécanique, fabrication et maintenance",
@@ -11,6 +11,13 @@ DOMAINES = ["TIC, numérique, IA et données", "Mécanique, fabrication et maint
             "Services aux collectivités et entrepreneuriat"]
 STATUTS = [("soumis", "Soumis"), ("a_completer", "À compléter"), ("accepte", "Accepté"), ("refuse", "Refusé")]
 DECISIONS = [s for s in STATUTS if s[0] != "soumis"]
+COHORTE_FORMAT = r"^[0-9]{4}-[A-Z0-9]{1,3}$"
+
+
+def cohorte_courante():
+    """Cohorte par défaut : semestre de dépôt (A = janvier-juin, B = juillet-décembre)."""
+    d = dt.date.today()
+    return "%d-%s" % (d.year, "A" if d.month <= 6 else "B")
 
 
 class User(AbstractUser):
@@ -30,7 +37,8 @@ class Projet(models.Model):
     domain = models.CharField("Domaine", max_length=100, choices=[(d, d) for d in DOMAINES])
     problem = models.TextField("Problème identifié", blank=True)
     solution = models.TextField("Solution proposée", blank=True)
-    cohort = models.CharField("Cohorte", max_length=20, default="2026-A")
+    cohort = models.CharField("Cohorte", max_length=20, default=cohorte_courante,
+                              validators=[RegexValidator(COHORTE_FORMAT, "Format attendu : 2026-A")])
     status = models.CharField("Statut", max_length=12, choices=STATUTS, default="soumis")
     file = models.FileField("Pièce jointe (pdf, png, jpg, docx - 5 Mo max)", upload_to="dossiers/", blank=True,
                             validators=[FileExtensionValidator(["pdf", "png", "jpg", "jpeg", "docx"])])

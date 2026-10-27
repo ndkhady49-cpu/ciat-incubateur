@@ -3,12 +3,7 @@ services:
     name: ciat-incubateur
     runtime: python
     plan: free
-    buildCommand: |
-      pip install -r requirements.txt &&
-      python manage.py collectstatic --noinput &&
-      python manage.py makemigrations incubateur &&
-      python manage.py migrate &&
-      python manage.py seed
+    buildCommand: bash build.sh
     startCommand: gunicorn config.wsgi
     envVars:
       - key: PYTHON_VERSION
@@ -17,5 +12,29 @@ services:
         value: "0"
       - key: DJANGO_SECRET_KEY
         generateValue: true
+      # Base PostgreSQL Neon (chaîne de connexion complète, avec ?sslmode=require)
+      - key: DATABASE_URL
+        sync: false
+      # Fichiers déposés : bucket privé Cloudflare R2
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      # Compte coordonnateur réel (créé une seule fois)
+      - key: CIAT_ADMIN_EMAIL
+        sync: false
+      - key: CIAT_ADMIN_PASSWORD
+        sync: false
+      - key: CIAT_ADMIN_NOM
+        sync: false
+      # Comptes de démonstration pour le jury (mot de passe secret, sans accès admin)
+      - key: SEED_DEMO
+        value: "1"
+      - key: DEMO_PASSWORD
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false

@@ -109,7 +109,8 @@ Le coordonnateur a accès à **toutes les fonctionnalités** des autres rôles, 
 
 | Problème | Solution |
 |---|---|
-| Mot de passe oublié | Contacter le coordonnateur (pas de réinitialisation en self-service) |
+| Mot de passe oublié | Contacter le coordonnateur, qui le réinitialise dans l'administration ; le changer ensuite dans « Mon profil » |
+| « Trop de tentatives de connexion » | Attendre 15 minutes (protection après 5 essais erronés) |
 | Fichier refusé | Vérifier l'extension (pdf, png, jpg, docx) et la taille (< 5 Mo) |
 | Page « Accès interdit » (403) | Vous n'avez pas le rôle requis pour cette action |
 | Le site met du temps à charger | Normal sur Render gratuit (réveil après 15 min d'inactivité) |

@@ -1,6 +1,10 @@
 {% extends "layout.html" %}{% block c %}
 <div class="cd" style="max-width:440px;margin:20px auto;width:100%">
-<h1>{% if mode == 'login' %}Connexion{% else %}Créer un compte porteur de projet{% endif %}</h1>
+<h1>{% if mode == 'login' %}Connexion{% elif mode == 'password' %}Changer mon mot de passe{% else %}Créer un compte porteur de projet{% endif %}</h1>
+{% if bloque %}<div class="fl">Trop de tentatives de connexion. Réessayez dans 15 minutes.</div>{% endif %}
 <form method="post">{% csrf_token %}{% include "partials/champs.html" %}
-<p><button style="width:100%;margin-top:14px">{% if mode == 'login' %}Se connecter{% else %}Créer mon compte{% endif %}</button></p></form>
-<p class="sm" style="text-align:center">{% if mode == 'login' %}<a href="{% url 'register' %}">Pas de compte ? Créer un compte</a>{% else %}<a href="{% url 'login' %}">Déjà inscrit ? Se connecter</a>{% endif %}</p></div>{% endblock %}
+<p><button style="width:100%;margin-top:14px">{% if mode == 'login' %}Se connecter{% elif mode == 'password' %}Enregistrer{% else %}Créer mon compte{% endif %}</button></p></form>
+{% if mode == 'login' %}<p class="sm" style="text-align:center"><a href="{% url 'register' %}">Pas de compte ? Créer un compte</a></p>
+<p class="sm" style="text-align:center">Mot de passe oublié ? Contactez la coordination du CIAT, qui peut le réinitialiser.</p>
+{% elif mode == 'register' %}<p class="sm" style="text-align:center"><a href="{% url 'login' %}">Déjà inscrit ? Se connecter</a></p>
+{% else %}<p class="sm" style="text-align:center"><a href="{% url 'profil' %}">Annuler</a></p>{% endif %}</div>{% endblock %}

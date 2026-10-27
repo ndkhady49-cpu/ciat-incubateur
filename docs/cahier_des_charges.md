@@ -81,7 +81,8 @@ Le présent projet vise à développer une **application web** permettant de gé
 |---|---|
 | Langage | Python 3.12 |
 | Framework | Django 5.x |
-| Base de données | SQLite (suffisant pour le volume attendu) |
+| Base de données | PostgreSQL (Neon) en production, SQLite en développement |
+| Stockage des fichiers | Cloudflare R2, bucket privé |
 | IA | API Anthropic (Claude) avec fallback mode démo |
 | Export PDF | ReportLab |
 | Export Excel | openpyxl |
@@ -98,7 +99,6 @@ Le présent projet vise à développer une **application web** permettant de gé
 ## 7. Limites connues et acceptées
 
 - Pas d'envoi d'e-mails (notifications uniquement dans l'application).
-- Pas de réinitialisation de mot de passe en self-service.
+- Pas de réinitialisation de mot de passe en self-service par e-mail (réinitialisation par le coordonnateur).
 - Le suivi à 3 et 6 mois est géré via les jalons (pas de module dédié).
 - Pas de pièces jointes sur les jalons individuels.
-- Base SQLite éphémère sur Render (réinitialisée à chaque redéploiement gratuit).

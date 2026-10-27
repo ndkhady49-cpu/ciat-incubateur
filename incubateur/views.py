@@ -6,17 +6,21 @@ import io
 import os
 from functools import wraps
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Prefetch, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 
-from .forms import (AccompagnementForm, CompteRenduForm, DocumentForm, EvaluationForm, JalonForm, ProfilForm,
-                    ProjetForm, RegisterForm, SuiviForm)
+from .forms import (AccompagnementForm, CohorteForm, CompteRenduForm, DocumentForm, EmailAuthForm, EvaluationForm,
+                    JalonForm, ProfilForm, ProjetForm, RegisterForm, SuiviForm)
 from .ia import CONSIGNES, compte_rendu_ia, suggestion_ia
 from .models import DOMAINES, STATUTS, Commentaire, CompteRendu, Document, Jalon, Projet, Suivi, User
 
@@ -42,6 +46,64 @@ def projet_autorise(request, pk):
             or (u.role == "mentor" and p.mentor_id == u.id)):
         return p
     raise PermissionDenied
+
+
+# ---------- limites anti-abus ----------
+def ip_client(request):
+    """Adresse IP du visiteur (Render place l'IP réelle en tête de X-Forwarded-For)."""
+    fwd = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    return fwd.split(",")[0].strip() if fwd else request.META.get("REMOTE_ADDR", "")
+
+
+def compter(cle, duree):
+    """Incrémente un compteur qui expire après « duree » secondes ; retourne la nouvelle valeur."""
+    cache.add(cle, 0, duree)
+    try:
+        return cache.incr(cle)
+    except ValueError:  # expiré entre add et incr
+        cache.set(cle, 1, duree)
+        return 1
+
+
+def quota_ia(user):
+    """True si l'utilisateur peut encore appeler l'IA cette heure-ci (sinon False)."""
+    return compter("ia:%d" % user.pk, 3600) <= settings.IA_APPELS_PAR_HEURE
+
+
+class ConnexionView(LoginView):
+    """Connexion par e-mail, bloquée 15 minutes après 5 échecs pour un même e-mail ou une même adresse IP."""
+    template_name = "auth.html"
+    authentication_form = EmailAuthForm
+    extra_context = {"mode": "login"}
+
+    def cles(self):
+        email = self.request.POST.get("username", "").strip().lower()
+        return ["login:ip:" + ip_client(self.request), "login:email:" + email]
+
+    def post(self, request, *args, **kwargs):
+        if any(cache.get(k, 0) >= settings.LOGIN_ECHECS_MAX for k in self.cles()):
+            return self.render_to_response(self.get_context_data(form=self.authentication_form(request),
+                                                                 bloque=True), status=429)
+        return super().post(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        for k in self.cles():
+            compter(k, settings.LOGIN_BLOCAGE_SECONDES)
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        cache.delete_many(self.cles())
+        return super().form_valid(form)
+
+
+class MotDePasseView(PasswordChangeView):
+    template_name = "auth.html"
+    extra_context = {"mode": "password"}
+    success_url = reverse_lazy("profil")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Mot de passe modifié.")
+        return super().form_valid(form)
 
 
 # ---------- accès ----------
@@ -131,6 +193,7 @@ def projet(request, pk):
         "comptes_rendus": p.comptes_rendus.select_related("auteur"),
         "eval_form": EvaluationForm(), "jalon_statuts": Jalon.STATUTS,
         "doc_form": DocumentForm(), "acc_form": AccompagnementForm(instance=p), "suivi_form": SuiviForm(),
+        "cohorte_form": CohorteForm(instance=p),
         "peut_suivre": request.user.role in ("coordo", "mentor") and p.status == "accepte",
         "peut_deposer": request.user.role in ("porteur", "mentor", "coordo"), "today": dt.date.today()})
 
@@ -145,7 +208,10 @@ def evaluer(request, pk):
         ev.project, ev.evaluator = p, request.user
         ev.save()
         p.status = ev.decision
-        p.save(update_fields=["status"])
+        if ev.decision != "accepte" and p.mentor_id:
+            p.mentor = None  # un projet non accepté n'est plus accompagné
+            messages.info(request, "Le mentor a été retiré : le projet n'est plus accepté.")
+        p.save(update_fields=["status", "mentor"])
         messages.success(request, "Décision enregistrée.")
     else:
         messages.error(request, "Notes de 0 à 5, décision et motivation obligatoires.")
@@ -189,6 +255,19 @@ def jalon_maj(request, pk):
         j.status = request.POST["status"]
         j.save(update_fields=["status"])
     return redirect("projet", pk=j.project_id)
+
+
+@role_required("coordo")
+@require_POST
+def cohorte(request, pk):
+    p = projet_autorise(request, pk)
+    form = CohorteForm(request.POST, instance=p)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Cohorte mise à jour.")
+    else:
+        messages.error(request, "Cohorte invalide (format attendu : 2026-A).")
+    return redirect("projet", pk=pk)
 
 
 @role_required("coordo", "mentor")
@@ -332,8 +411,12 @@ def compte_rendu(request, pk):
             messages.success(request, "Compte rendu enregistré.")
             return redirect("projet", pk=pk)
     elif request.method == "POST" and action == "generer":
-        texte, src = compte_rendu_ia(p)
-        form = CompteRenduForm(initial={"texte": texte})
+        if quota_ia(request.user):
+            texte, src = compte_rendu_ia(p)
+            form = CompteRenduForm(initial={"texte": texte})
+        else:
+            messages.error(request, "Limite d'utilisation de l'IA atteinte : réessayez dans une heure.")
+            form = CompteRenduForm()
     else:
         form = CompteRenduForm()
     return render(request, "compte_rendu.html", {"p": p, "form": form, "src": src,
@@ -483,7 +566,10 @@ def ia(request):
     sug = src = None
     mode, texte = request.POST.get("mode", "reformuler"), request.POST.get("texte", "").strip()
     if request.method == "POST" and texte and mode in CONSIGNES:
-        sug, src = suggestion_ia(mode, texte[:3000])
+        if quota_ia(request.user):
+            sug, src = suggestion_ia(mode, texte[:3000])
+        else:
+            messages.error(request, "Limite d'utilisation de l'IA atteinte : réessayez dans une heure.")
     mes = Projet.objects.filter(owner=request.user, status__in=("soumis", "a_completer"))
     return render(request, "ia.html", {"sug": sug, "src": src, "texte": texte, "mode": mode,
                                        "mes": mes, "modes": list(CONSIGNES)})

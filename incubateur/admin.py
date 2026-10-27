@@ -6,8 +6,17 @@ from .models import Commentaire, CompteRendu, Document, Evaluation, Jalon, Proje
 @admin.register(User)
 class UserAdm(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (("CIAT", {"fields": ("role", "genre")}),)
-    list_display = ("username", "first_name", "role", "genre")
-    list_filter = ("role",)
+    add_fieldsets = ((None, {"classes": ("wide",),
+                             "description": "Identifiant = adresse e-mail de la personne.",
+                             "fields": ("username", "first_name", "role", "genre", "password1", "password2")}),)
+    list_display = ("username", "first_name", "role", "genre", "is_active")
+    list_filter = ("role", "is_active")
+    search_fields = ("username", "first_name")
+
+    def save_model(self, request, obj, form, change):
+        obj.username = obj.username.strip().lower()
+        obj.email = obj.username
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Projet)

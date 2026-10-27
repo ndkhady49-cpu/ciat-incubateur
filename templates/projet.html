@@ -6,6 +6,8 @@
 {% if user.role == 'porteur' and p.editable %}<a class="bt" href="{% url 'projet_modifier' p.pk %}">Modifier</a>{% endif %}</div></div>
 
 <div class="rw"><div class="cd"><h2>Dossier</h2><p class="sm">{{ p.owner.nom }} · {{ p.domain }} · cohorte {{ p.cohort }}{% if p.mentor %} · mentor : {{ p.mentor.nom }}{% endif %}</p>
+{% if user.role == 'coordo' %}<details><summary>Changer de cohorte</summary><form class="inl" method="post" action="{% url 'cohorte' p.pk %}">{% csrf_token %}
+<div style="flex:1"><label>Cohorte (ex. 2026-B)</label><input name="cohort" value="{{ p.cohort }}" maxlength="20" pattern="[0-9]{4}-[A-Z0-9]{1,3}" required></div><button class="b2">OK</button></form></details>{% endif %}
 <label>Problème</label><p>{{ p.problem|default:"-" }}</p><label>Solution</label><p>{{ p.solution|default:"-" }}</p>
 {% if p.ia_used %}<p class="sm">Ce dossier contient du texte rédigé avec l'aide d'une IA, relu et validé par le porteur.</p>{% endif %}
 <label>Documents</label>

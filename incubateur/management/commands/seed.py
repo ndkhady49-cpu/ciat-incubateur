@@ -1,27 +1,55 @@
-"""python manage.py seed : crée 4 comptes de test + 30 projets fictifs (ne fait rien si des données existent)."""
+"""python manage.py seed : comptes de démonstration (jury) + 30 projets fictifs, créés une seule fois.
+Mot de passe des comptes : variable DEMO_PASSWORD (obligatoire hors développement).
+Les comptes de démonstration n'ont pas accès à /admin/.
+python manage.py seed --supprimer : supprime les comptes de démonstration et tous leurs projets."""
 import datetime as dt
+import os
 import random
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db import transaction
+from django.db.models import Q
+
 from incubateur.models import DOMAINES, Commentaire, Evaluation, Jalon, Projet, Suivi, User
 
-MDP = "Passw0rd!"
+# Liste exacte des comptes fictifs : un compte réel (même en @ciat.sn) n'est jamais concerné
+COMPTES_DEMO = (Q(username__in=["coordo@ciat.sn", "comite@ciat.sn", "mentor@ciat.sn", "mentor2@ciat.sn",
+                                "porteur@ciat.sn"]) | Q(username__regex=r"^porteur[0-9]+@exemple\.sn$"))
 
 
 class Command(BaseCommand):
     help = "Données fictives de démonstration"
 
+    def add_arguments(self, parser):
+        parser.add_argument("--supprimer", action="store_true", help="Supprime les données de démonstration")
+
     def handle(self, *args, **options):
-        if User.objects.exists():
-            self.stdout.write("Des données existent déjà : rien à faire.")
+        if options["supprimer"]:
+            n, _ = Projet.objects.filter(owner__in=User.objects.filter(COMPTES_DEMO)).delete()
+            u, _ = User.objects.filter(COMPTES_DEMO).delete()
+            self.stdout.write(self.style.SUCCESS("Démonstration supprimée (%d objets, %d avec les comptes)." % (n, u)))
             return
+        mdp = os.environ.get("DEMO_PASSWORD") or ("Passw0rd!" if settings.DEBUG else "")
+        if not mdp:
+            self.stdout.write("DEMO_PASSWORD absent : aucune donnée de démonstration créée.")
+            return
+        if User.objects.filter(COMPTES_DEMO).exists():
+            self.stdout.write("Les données de démonstration existent déjà : rien à faire.")
+            return
+        with transaction.atomic():
+            self.creer(mdp)
+        self.stdout.write(self.style.SUCCESS("Données de démonstration créées."))
+
+    def creer(self, mdp):
         r = random.Random(42)
         today = dt.date.today()
 
-        def mk(email, nom, role, genre, **extra):
-            return User.objects.create_user(username=email, email=email, password=MDP, first_name=nom,
-                                            role=role, genre=genre, **extra)
+        def mk(email, nom, role, genre):
+            return User.objects.create_user(username=email, email=email, password=mdp, first_name=nom,
+                                            role=role, genre=genre)
 
-        mk("coordo@ciat.sn", "Awa Diallo (coordonnatrice)", "coordo", "Femme", is_staff=True, is_superuser=True)
+        mk("coordo@ciat.sn", "Awa Diallo (coordonnatrice)", "coordo", "Femme")
         comite = mk("comite@ciat.sn", "Moussa Ndiaye (comité)", "comite", "Homme")
         mentors = [mk("mentor@ciat.sn", "Fatou Sow (mentor)", "mentor", "Femme"),
                    mk("mentor2@ciat.sn", "Cheikh Fall (mentor)", "mentor", "Homme")]
@@ -66,4 +94,3 @@ class Command(BaseCommand):
                                              situation=r.choice(["active", "croissance", "pause", "arret"]),
                                              emplois=r.randint(0, 6), chiffre_affaires=r.randint(0, 40) * 50000,
                                              observations="Suivi de démonstration.")
-        self.stdout.write(self.style.SUCCESS("Données de démonstration créées (mot de passe : %s)." % MDP))

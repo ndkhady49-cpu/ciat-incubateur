@@ -41,12 +41,13 @@ Une application web centralisée permettant à chaque acteur (porteur, comité, 
 ## 4. Choix techniques
 
 ### 4.1 Architecture
-L'application suit le modèle MVT de Django (Model-View-Template). Le backend Python gère la logique métier et les droits, la base SQLite stocke les données, et les templates HTML produisent l'interface.
+L'application suit le modèle MVT de Django (Model-View-Template). Le backend Python gère la logique métier et les droits, PostgreSQL stocke les données, et les templates HTML produisent l'interface.
 
 | Composant | Technologie | Justification |
 |---|---|---|
 | Framework | Django 5 | Maturité, sécurité intégrée (CSRF, auth), ORM |
-| Base de données | SQLite | Suffisant pour le volume (< 100 projets par an), zéro configuration |
+| Base de données | PostgreSQL (Neon) en production, SQLite en local | Données persistantes et sauvegardées ; aucune installation en développement |
+| Fichiers déposés | Cloudflare R2 (bucket privé) | Fichiers conservés entre les déploiements, jamais accessibles par lien public |
 | IA | API Anthropic (Claude) | Qualité du français, mode démonstration sans clé |
 | Graphiques | Chart.js | Graphiques interactifs (survol, légendes cliquables) |
 | Export PDF | ReportLab | Génération de fiches et comptes rendus |
@@ -85,7 +86,11 @@ Huit entités (détail dans `docs/schema_base_de_donnees.md`) :
 - Une preuve ou un commentaire ne peut viser qu'un jalon du même projet (vérifié côté serveur).
 - Fichiers : extensions autorisées (pdf, png, jpg, docx, xlsx) et 5 Mo maximum. Ils sont servis par une vue protégée, jamais par un lien direct vers `media/`.
 - Mots de passe : 8 caractères minimum, rejet des mots de passe courants.
-- En production : `DEBUG` désactivé, cookies sécurisés, clé secrète générée par Render.
+- Connexion bloquée 15 minutes après 5 échecs (par e-mail ou par adresse IP) ; 20 appels à l'IA par utilisateur et par heure.
+- Chaque utilisateur peut changer son mot de passe ; le coordonnateur réinitialise un mot de passe oublié dans l'administration.
+- En production : `DEBUG` désactivé, clé secrète obligatoire (le site refuse de démarrer sans), cookies sécurisés, HSTS.
+- Aucun mot de passe dans le code : le compte coordonnateur réel et les comptes de démonstration sont créés à partir
+  de variables secrètes ; les comptes de démonstration n'ont pas accès à l'administration.
 
 ## 5. Intégration de l'IA générative
 
@@ -192,7 +197,7 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
 - ✅ Assistant IA de rédaction avec validation humaine
 
 ### 10.2 Tests automatisés
-10 tests couvrent les parcours critiques (`python manage.py test`, 10/10 OK) :
+18 tests couvrent les parcours critiques (`python manage.py test`, 18/18 OK) :
 1. Accès protégé et vérification CSRF.
 2. Dépôt de dossier et calcul de complétude.
 3. Rejet d'un fichier interdit (.exe).
@@ -203,6 +208,14 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
 8. Commentaires et calendrier filtré selon le rôle.
 9. Compte rendu : brouillon IA non enregistré, validation, PDF.
 10. Tableau de bord : catégories de jalons exclusives et proportions exactes.
+11. Connexion bloquée après 5 échecs, puis rétablie.
+12. Changement de mot de passe.
+13. Refus après réévaluation : le mentor est retiré.
+14. Cohorte par défaut et modification réservée au coordonnateur.
+15. Quota d'appels à l'IA.
+16. Création du compte coordonnateur, démonstration avec mot de passe secret et sans accès admin, suppression de la démonstration.
+17. Pages d'erreur 403 et 404.
+18. Réglages de production : PostgreSQL, stockage R2 privé, clé secrète obligatoire.
 
 ### 10.3 Anomalies relevées et corrigées
 | Anomalie | Correction |
@@ -211,24 +224,34 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
 | Colonne « Proportion » affichant le nombre au lieu du pourcentage | Pourcentage calculé dans la vue |
 | Styles du tableau de bord absents de la feuille CSS | Styles ajoutés |
 | Fiche PDF tronquée quand le texte dépasse une page | Saut de page automatique |
+| Compte coordonnateur de démonstration administrateur avec un mot de passe publié | Compte réel créé par variables secrètes ; démonstration sans accès admin, mot de passe secret |
+| Base et fichiers effacés à chaque redéploiement | PostgreSQL Neon et Cloudflare R2 |
+| Migrations générées en production | Migrations versionnées, seulement appliquées au déploiement |
+| Tous les projets classés dans la cohorte « 2026-A » | Cohorte calculée selon le semestre de dépôt, modifiable par le coordonnateur |
+| Projet refusé après réévaluation mais toujours suivi par un mentor | Le mentor est retiré si la décision n'est plus « accepté » |
+| Aucune limite de tentatives de connexion ni d'appels à l'IA | Blocage temporaire et quota horaire |
+| Impossible de changer son mot de passe | Page « Changer mon mot de passe » |
 
 ## 11. Déploiement
 
 - **URL** : https://ciat-incubateur.onrender.com
-- **Build** : installation des dépendances, collectstatic, migrations, seed.
+- **Architecture** : Render (application) + Neon (PostgreSQL, région Europe) + Cloudflare R2 (fichiers).
+- **Build** (`build.sh`) : dépendances, fichiers statiques, migrations, création du compte coordonnateur réel,
+  comptes de démonstration pour le jury (une seule fois, si `SEED_DEMO=1`). Détail dans `docs/deploiement.md`.
 - **Démarrage** : `gunicorn config.wsgi`
-- **Variables d'environnement** : `DJANGO_DEBUG=0`, `DJANGO_SECRET_KEY` (générée), `PYTHON_VERSION=3.12.3`, `ANTHROPIC_API_KEY` (facultative).
+- **Variables d'environnement** : `DATABASE_URL`, `R2_*`, `CIAT_ADMIN_*`, `DEMO_PASSWORD`, `DJANGO_DEBUG=0`,
+  `DJANGO_SECRET_KEY`, `ANTHROPIC_API_KEY` (facultative), toutes saisies dans Render et jamais dans le code.
 
 ## 12. Limites et perspectives
 
 ### 12.1 Limites actuelles
 - Pas d'envoi d'e-mails : les alertes ne sont visibles que dans l'application.
-- Pas de réinitialisation de mot de passe en libre-service.
-- Base SQLite et fichiers éphémères sur l'offre gratuite de Render : les données sont réinitialisées à chaque redéploiement.
+- Pas de réinitialisation de mot de passe en libre-service par e-mail (elle passe par le coordonnateur).
+- Offre gratuite de Render : mise en veille après 15 minutes sans visite (premier chargement lent).
+- Les limites anti-abus sont comptées par processus serveur (suffisant avec un seul processus, à revoir si le service grandit).
 - Les analyses portent sur des données fictives ; elles devront être refaites sur les données réelles du CIAT.
 
 ### 12.2 Améliorations possibles
-- Migrer vers PostgreSQL et un stockage de fichiers persistant.
 - Rendre la preuve obligatoire pour valider un jalon (recommandation 1).
 - Envoyer les alertes de retard et de suivi par e-mail.
 - Ajouter la réinitialisation du mot de passe par e-mail.

@@ -75,6 +75,12 @@ class DocumentForm(forms.ModelForm):
         return taille_max(self.cleaned_data.get("fichier"))
 
 
+class CohorteForm(forms.ModelForm):
+    class Meta:
+        model = Projet
+        fields = ["cohort"]
+
+
 class AccompagnementForm(forms.ModelForm):
     class Meta:
         model = Projet

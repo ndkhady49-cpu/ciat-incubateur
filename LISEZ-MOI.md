@@ -8,15 +8,19 @@ exports PDF/Excel, assistant IA de rédaction. Backend Django 5, base SQLite, pa
 - **Windows** : double-clic sur `lancer.bat`
 - **Linux / Mac** : `./lancer.sh`
 - À la main : `pip install -r requirements.txt`, puis
-  `python manage.py makemigrations incubateur`, `python manage.py migrate`, `python manage.py seed`, `python manage.py runserver`
+  `python manage.py migrate`, `python manage.py seed`, `python manage.py runserver`
 
-Ouvrir http://127.0.0.1:8000. `seed` crée 4 comptes de test et 30 projets fictifs (une seule fois).
-Le dossier `incubateur/migrations/` est généré par `makemigrations` : gardez-le ensuite dans le dépôt.
+Ouvrir http://127.0.0.1:8000. En local, la base est SQLite (`db.sqlite3`) et les fichiers vont dans `media/`.
+`seed` crée les comptes de démonstration et 30 projets fictifs (une seule fois).
+Après une modification de `models.py` : `python manage.py makemigrations incubateur` en local, puis versionner
+la migration créée (la production applique seulement `migrate`).
 
-## Comptes de test (mot de passe : `Passw0rd!`)
+## Comptes de démonstration
+En local, mot de passe `Passw0rd!`. En production, mot de passe défini par la variable secrète `DEMO_PASSWORD`
+et communiqué au jury uniquement. Ces comptes n'ont pas accès à `/admin/`.
 | Rôle | E-mail |
 |---|---|
-| Coordonnateur (accès aussi à /admin/) | coordo@ciat.sn |
+| Coordonnateur | coordo@ciat.sn |
 | Comité | comite@ciat.sn |
 | Mentor | mentor@ciat.sn (ou mentor2@ciat.sn) |
 | Porteur de projet | porteur@ciat.sn |
@@ -35,10 +39,11 @@ assistant IA.
 `python manage.py analyse` : indicateurs (sélection par cohorte, domaine et genre, grille d'évaluation, jalons,
 suivis 3/6 mois, emplois) et contrôle de qualité des données. Résultats commentés dans `docs/rapport.md`.
 
-## Déploiement (lien pour le jury)
-Variables : `DJANGO_DEBUG=0`, `DJANGO_SECRET_KEY` (valeur secrète longue), `DJANGO_ALLOWED_HOSTS` (ex. monsite.onrender.com),
-`DJANGO_CSRF_ORIGINS` (ex. https://monsite.onrender.com). Commande de build : `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py makemigrations incubateur && python manage.py migrate && python manage.py seed`.
-Commande de démarrage : `gunicorn config.wsgi`. Attention : le stockage des hébergeurs gratuits est souvent temporaire (base et pièces jointes).
+## Déploiement (https://ciat-incubateur.onrender.com)
+Render (serveur) + Neon (PostgreSQL) + Cloudflare R2 (fichiers) : les données sont conservées entre les déploiements.
+Procédure complète, variables d'environnement et exploitation : **`docs/deploiement.md`**.
+Build : `bash build.sh` (migrations, compte coordonnateur réel via `init_coordo`, démonstration si `SEED_DEMO=1`).
+Démarrage : `gunicorn config.wsgi`.
 
 ## Structure
 - `config/` : réglages, routes principales
@@ -47,4 +52,5 @@ Commande de démarrage : `gunicorn config.wsgi`. Attention : le stockage des hé
 - `media/` : pièces jointes (téléchargées uniquement via une vue protégée par rôle)
 
 ## Limites connues
-Pas d'envoi d'e-mails (retards et suivis dus s'affichent dans l'application), pas de réinitialisation de mot de passe.
+Pas d'envoi d'e-mails (retards et suivis dus s'affichent dans l'application) ; un mot de passe oublié est
+réinitialisé par le coordonnateur dans `/admin/` (chaque utilisateur peut changer le sien dans « Mon profil »).

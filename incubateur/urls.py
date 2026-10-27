@@ -1,12 +1,11 @@
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LogoutView
 from django.urls import path
 from . import views
-from .forms import EmailAuthForm
 
 urlpatterns = [
     path("", views.accueil, name="accueil"),
-    path("login/", LoginView.as_view(template_name="auth.html", authentication_form=EmailAuthForm,
-                                     extra_context={"mode": "login"}), name="login"),
+    path("login/", views.ConnexionView.as_view(), name="login"),
+    path("mot-de-passe/", views.MotDePasseView.as_view(), name="mot_de_passe"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("register/", views.register, name="register"),
     path("projets/", views.projets, name="projets"),
@@ -19,6 +18,7 @@ urlpatterns = [
     path("projet/<int:pk>/fichier/", views.fichier, name="fichier"),
     path("projet/<int:pk>/fiche.pdf", views.fiche_pdf, name="fiche_pdf"),
     path("jalon/<int:pk>/", views.jalon_maj, name="jalon_maj"),
+    path("projet/<int:pk>/cohorte/", views.cohorte, name="cohorte"),
     path("projet/<int:pk>/accompagnement/", views.accompagnement, name="accompagnement"),
     path("projet/<int:pk>/document/", views.document_ajout, name="document_ajout"),
     path("projet/<int:pk>/commentaire/", views.commentaire_ajout, name="commentaire_ajout"),
