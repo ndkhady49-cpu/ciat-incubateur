@@ -2,7 +2,7 @@
 import datetime as dt
 import random
 from django.core.management.base import BaseCommand
-from incubateur.models import DOMAINES, Evaluation, Jalon, Projet, User
+from incubateur.models import DOMAINES, Commentaire, Evaluation, Jalon, Projet, Suivi, User
 
 MDP = "Passw0rd!"
 
@@ -46,8 +46,24 @@ class Command(BaseCommand):
                 Evaluation.objects.create(project=p, evaluator=comite, innovation=n[0], faisabilite=n[1], impact=n[2],
                                           equipe=n[3], decision=st, motivation="Évaluation de démonstration par le comité.")
             if st == "accepte":
-                for t in ["Prototype v1", "Test terrain", "Étude de marché", "Suivi à 3 mois"]:
+                p.objectifs = ("Valider le prototype auprès de 10 utilisateurs.\n"
+                               "Signer un premier contrat ou une lettre d'intention.\nStructurer le modèle économique.")
+                # Un tiers des projets acceptés a terminé l'incubation : suivis à 3 et 6 mois attendus
+                if r.random() < .4:
+                    p.fin_incubation = today - dt.timedelta(days=r.randint(100, 260))
+                p.save(update_fields=["objectifs", "fin_incubation"])
+                for t in ["Prototype v1", "Test terrain", "Étude de marché", "Premier client"]:
                     due = today + dt.timedelta(days=r.randint(-60, 90))
                     s = "valide" if due < today - dt.timedelta(days=20) or r.random() < .3 else r.choice(["a_faire", "en_cours"])
-                    Jalon.objects.create(project=p, title=t, due=due, status=s)
+                    j = Jalon.objects.create(project=p, title=t, due=due, status=s)
+                    if r.random() < .3:
+                        Commentaire.objects.create(project=p, jalon=j, auteur=p.mentor, texte=r.choice(
+                            ["Bon avancement, pensez à déposer la preuve.", "Point à revoir lors de la prochaine séance.",
+                             "Échéance difficile à tenir : prévoir un plan de rattrapage."]))
+                for m, d in p.echeances_suivi():
+                    if d <= today and r.random() < .6:
+                        Suivi.objects.create(project=p, periode=m, auteur=p.mentor, created=d,
+                                             situation=r.choice(["active", "croissance", "pause", "arret"]),
+                                             emplois=r.randint(0, 6), chiffre_affaires=r.randint(0, 40) * 50000,
+                                             observations="Suivi de démonstration.")
         self.stdout.write(self.style.SUCCESS("Données de démonstration créées (mot de passe : %s)." % MDP))

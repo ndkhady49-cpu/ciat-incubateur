@@ -1,4 +1,4 @@
-"""Modèle de données : User, Projet, Evaluation, Jalon."""
+"""Modèle de données : User, Projet, Evaluation, Jalon, Document, Commentaire, Suivi, CompteRendu."""
 import datetime as dt
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -36,6 +36,8 @@ class Projet(models.Model):
                             validators=[FileExtensionValidator(["pdf", "png", "jpg", "jpeg", "docx"])])
     mentor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                                related_name="projets_suivis", limit_choices_to={"role": "mentor"})
+    objectifs = models.TextField("Objectifs d'accompagnement", blank=True)
+    fin_incubation = models.DateField("Fin d'incubation", null=True, blank=True)
     ia_used = models.BooleanField(default=False)
     created = models.DateField(default=dt.date.today)
 
@@ -48,12 +50,24 @@ class Projet(models.Model):
     def completude(self):
         champs = [("title", "Titre"), ("domain", "Domaine"), ("problem", "Problème"),
                   ("solution", "Solution"), ("file", "Pièce jointe")]
-        manque = [lib for k, lib in champs if not getattr(self, k)]
+        manque = [lib for k, lib in champs if not getattr(self, k)
+                  and not (k == "file" and self.documents.filter(jalon=None).exists())]
         return int(100 * (len(champs) - len(manque)) / len(champs)), manque
 
     @property
     def editable(self):
         return self.status in ("soumis", "a_completer")
+
+    def echeances_suivi(self):
+        """Dates des suivis post-incubation (3 et 6 mois après la fin d'incubation)."""
+        if not self.fin_incubation:
+            return []
+        return [(m, self.fin_incubation + dt.timedelta(days=30 * m)) for m in (3, 6)]
+
+    def suivis_dus(self):
+        """Suivis (3 ou 6 mois) dont l'échéance est passée et qui ne sont pas encore saisis."""
+        faits = set(self.suivis.values_list("periode", flat=True))
+        return [(m, d) for m, d in self.echeances_suivi() if m not in faits and d <= dt.date.today()]
 
 
 def note():
@@ -85,7 +99,6 @@ class Jalon(models.Model):
     title = models.CharField("Titre", max_length=200)
     due = models.DateField("Échéance")
     status = models.CharField(max_length=10, choices=STATUTS, default="a_faire")
-    comment = models.CharField(max_length=300, blank=True)
 
     class Meta:
         ordering = ["due"]
@@ -93,3 +106,62 @@ class Jalon(models.Model):
     @property
     def en_retard(self):
         return self.status != "valide" and self.due < dt.date.today()
+
+
+EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "docx", "xlsx"]
+
+
+class Document(models.Model):
+    """Document du dossier (jalon vide) ou preuve de réalisation d'un jalon."""
+    project = models.ForeignKey(Projet, on_delete=models.CASCADE, related_name="documents")
+    jalon = models.ForeignKey(Jalon, null=True, blank=True, on_delete=models.CASCADE, related_name="preuves")
+    titre = models.CharField("Intitulé", max_length=150)
+    fichier = models.FileField("Fichier (pdf, png, jpg, docx, xlsx - 5 Mo max)", upload_to="documents/",
+                               validators=[FileExtensionValidator(EXTENSIONS)])
+    auteur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+
+class Commentaire(models.Model):
+    """Échange entre porteur, mentor et coordination, sur le projet ou sur un jalon."""
+    project = models.ForeignKey(Projet, on_delete=models.CASCADE, related_name="commentaires")
+    jalon = models.ForeignKey(Jalon, null=True, blank=True, on_delete=models.CASCADE, related_name="commentaires")
+    auteur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    texte = models.TextField("Commentaire", max_length=1000)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created"]
+
+
+class Suivi(models.Model):
+    """Suivi post-incubation à 3 et 6 mois."""
+    SITUATIONS = [("active", "Activité en cours"), ("croissance", "En croissance"), ("pause", "En pause"),
+                  ("arret", "Arrêtée")]
+    project = models.ForeignKey(Projet, on_delete=models.CASCADE, related_name="suivis")
+    periode = models.PositiveSmallIntegerField("Période", choices=[(3, "3 mois"), (6, "6 mois")])
+    situation = models.CharField("Situation du projet", max_length=12, choices=SITUATIONS)
+    emplois = models.PositiveSmallIntegerField("Emplois créés", default=0)
+    chiffre_affaires = models.PositiveIntegerField("Chiffre d'affaires (FCFA)", null=True, blank=True)
+    observations = models.TextField("Observations", blank=True)
+    auteur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created = models.DateField(default=dt.date.today)
+
+    class Meta:
+        ordering = ["periode"]
+        constraints = [models.UniqueConstraint(fields=["project", "periode"], name="suivi_unique_par_periode")]
+
+
+class CompteRendu(models.Model):
+    """Compte rendu de suivi, éventuellement rédigé avec l'IA puis relu et validé."""
+    project = models.ForeignKey(Projet, on_delete=models.CASCADE, related_name="comptes_rendus")
+    auteur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    texte = models.TextField("Compte rendu")
+    ia_used = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-id"]

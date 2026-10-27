@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import UploadedFile
-from .models import Evaluation, Jalon, Projet, User
+from .models import CompteRendu, Document, Evaluation, Jalon, Projet, Suivi, User
 
 
 class EmailAuthForm(AuthenticationForm):
@@ -43,10 +43,13 @@ class ProjetForm(forms.ModelForm):
                    "file": forms.FileInput}
 
     def clean_file(self):
-        f = self.cleaned_data.get("file")
-        if isinstance(f, UploadedFile) and f.size > 5 * 1024 * 1024:
-            raise forms.ValidationError("Fichier trop volumineux (5 Mo maximum).")
-        return f
+        return taille_max(self.cleaned_data.get("file"))
+
+
+def taille_max(f):
+    if isinstance(f, UploadedFile) and f.size > 5 * 1024 * 1024:
+        raise forms.ValidationError("Fichier trop volumineux (5 Mo maximum).")
+    return f
 
 
 class EvaluationForm(forms.ModelForm):
@@ -60,6 +63,38 @@ class JalonForm(forms.ModelForm):
     class Meta:
         model = Jalon
         fields = ["title", "due"]
+
+
+class DocumentForm(forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ["titre", "fichier"]
+        widgets = {"fichier": forms.FileInput}
+
+    def clean_fichier(self):
+        return taille_max(self.cleaned_data.get("fichier"))
+
+
+class AccompagnementForm(forms.ModelForm):
+    class Meta:
+        model = Projet
+        fields = ["objectifs", "fin_incubation"]
+        widgets = {"objectifs": forms.Textarea(attrs={"rows": 4}),
+                   "fin_incubation": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
+
+
+class SuiviForm(forms.ModelForm):
+    class Meta:
+        model = Suivi
+        fields = ["periode", "situation", "emplois", "chiffre_affaires", "observations"]
+        widgets = {"observations": forms.Textarea(attrs={"rows": 3})}
+
+
+class CompteRenduForm(forms.ModelForm):
+    class Meta:
+        model = CompteRendu
+        fields = ["texte"]
+        widgets = {"texte": forms.Textarea(attrs={"rows": 14})}
 
 
 class ProfilForm(forms.Form):

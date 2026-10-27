@@ -1,7 +1,8 @@
 # CIAT Incubateur - Plateforme de gestion de l'incubateur (Django)
 
-Dépôt de dossier, évaluation par un comité, affectation de mentor, suivi des jalons avec alertes de retard,
-tableau de bord, exports PDF/Excel, assistant IA de rédaction. Backend Django 5, base SQLite, pages HTML (templates Django + CSS).
+Dépôt de dossier et de documents, évaluation par un comité, affectation de mentor et objectifs, jalons avec preuves,
+commentaires et alertes de retard, calendrier, suivi à 3 et 6 mois, tableau de bord, comptes rendus rédigés avec l'IA,
+exports PDF/Excel, assistant IA de rédaction. Backend Django 5, base SQLite, pages HTML (templates Django + CSS).
 
 ## Lancer (Python 3.10+)
 - **Windows** : double-clic sur `lancer.bat`
@@ -27,7 +28,8 @@ Le texte suggéré n'est enregistré qu'après relecture et validation du porteu
 
 ## Tests
 `python manage.py test` : CSRF, droits par rôle, dépôt, complétude, fichier interdit, évaluation, mentor, jalons,
-tableau de bord, exports, assistant IA.
+objectifs, documents et preuves, commentaires, calendrier, suivis 3/6 mois, compte rendu IA, tableau de bord, exports,
+assistant IA.
 
 ## Déploiement (lien pour le jury)
 Variables : `DJANGO_DEBUG=0`, `DJANGO_SECRET_KEY` (valeur secrète longue), `DJANGO_ALLOWED_HOSTS` (ex. monsite.onrender.com),
@@ -41,5 +43,4 @@ Commande de démarrage : `gunicorn config.wsgi`. Attention : le stockage des hé
 - `media/` : pièces jointes (téléchargées uniquement via une vue protégée par rôle)
 
 ## Limites connues
-Pas d'envoi d'e-mails (les retards s'affichent dans l'application), pas de réinitialisation de mot de passe,
-suivi à 3 et 6 mois géré comme des jalons, pas de fichiers joints sur les jalons.
+Pas d'envoi d'e-mails (retards et suivis dus s'affichent dans l'application), pas de réinitialisation de mot de passe.

@@ -4,6 +4,7 @@
 <nav>{% if user.is_authenticated %}
 {% if user.role == 'coordo' or user.role == 'comite' %}<a href="{% url 'dashboard' %}">📊 Tableau de bord</a>{% endif %}
 <a href="{% url 'projets' %}">{% if user.role == 'porteur' %}📁 Mon dossier{% else %}📁 Projets{% endif %}</a>
+<a href="{% url 'calendrier' %}">📅 Calendrier</a>
 {% if user.role == 'porteur' %}<a href="{% url 'ia' %}">🤖 Assistant IA</a>{% endif %}
 {% if user.role == 'coordo' %}<a href="{% url 'export_xlsx' %}">📥 Export Excel</a><a href="/admin/">⚙️ Administration</a>{% endif %}
 <a href="{% url 'profil' %}">👤 {{ user.nom }}</a>

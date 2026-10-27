@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Evaluation, Jalon, Projet, User
+from .models import Commentaire, CompteRendu, Document, Evaluation, Jalon, Projet, Suivi, User
 
 
 @admin.register(User)
@@ -19,3 +19,24 @@ class ProjetAdm(admin.ModelAdmin):
 
 admin.site.register(Evaluation)
 admin.site.register(Jalon)
+
+
+@admin.register(Document)
+class DocumentAdm(admin.ModelAdmin):
+    list_display = ("titre", "project", "jalon", "auteur", "created")
+
+
+@admin.register(Commentaire)
+class CommentaireAdm(admin.ModelAdmin):
+    list_display = ("project", "jalon", "auteur", "created")
+
+
+@admin.register(Suivi)
+class SuiviAdm(admin.ModelAdmin):
+    list_display = ("project", "periode", "situation", "emplois", "chiffre_affaires")
+    list_filter = ("periode", "situation")
+
+
+@admin.register(CompteRendu)
+class CompteRenduAdm(admin.ModelAdmin):
+    list_display = ("project", "auteur", "ia_used", "created")
