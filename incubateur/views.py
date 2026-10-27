@@ -43,9 +43,15 @@ def projet_autorise(request, pk):
 
 # ---------- accès ----------
 def accueil(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
-    return redirect("dashboard" if request.user.role in ("coordo", "comite") else "projets")
+    if request.user.is_authenticated:
+        return redirect("dashboard" if request.user.role in ("coordo", "comite") else "projets")
+    nb_projets = Projet.objects.count()
+    nb_mentors = User.objects.filter(role="mentor").count()
+    decides = Projet.objects.filter(status__in=("accepte", "refuse")).count()
+    acceptes = Projet.objects.filter(status="accepte").count()
+    taux_sel = int(100 * acceptes / decides) if decides else 0
+    return render(request, "accueil.html", {
+        "nb_projets": nb_projets, "nb_mentors": nb_mentors, "taux_sel": taux_sel})
 
 
 def register(request):

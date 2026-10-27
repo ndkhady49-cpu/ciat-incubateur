@@ -1,0 +1,167 @@
+{% load static %}<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CIAT Incubateur — Centre d'Innovation, d'Application et de Transfert</title>
+<meta name="description" content="Plateforme de gestion de l'incubateur du CIAT — ISEP Amadou Trawaré de Diamniadio. Soumettez votre projet, recevez un accompagnement et développez votre innovation.">
+<link rel="stylesheet" href="{% static 'style.css' %}"></head><body>
+
+<!-- NAVBAR -->
+<header class="hero-header">
+<a href="/"><img src="{% static 'logo.png' %}" alt="CIAT Incubateur" onerror="this.style.display='none'"></a>
+<nav>
+{% if user.is_authenticated %}
+{% if user.role == 'coordo' or user.role == 'comite' %}<a href="{% url 'dashboard' %}">📊 Tableau de bord</a>{% endif %}
+<a href="{% url 'projets' %}">📁 {% if user.role == 'porteur' %}Mon dossier{% else %}Projets{% endif %}</a>
+{% if user.role == 'porteur' %}<a href="{% url 'ia' %}">🤖 Assistant IA</a>{% endif %}
+<a href="{% url 'profil' %}">👤 {{ user.nom }}</a>
+<form method="post" action="{% url 'logout' %}" style="margin:0">{% csrf_token %}<button class="b2">Déconnexion</button></form>
+{% else %}
+<a href="{% url 'login' %}" class="bt b2">Se connecter</a>
+<a href="{% url 'register' %}" class="bt">Créer un compte</a>
+{% endif %}
+</nav></header>
+
+<!-- HERO -->
+<section class="hero">
+<div class="hero-content">
+<div class="hero-badge">🚀 ISEP Amadou Trawaré de Diamniadio</div>
+<h1 class="hero-title">Centre d'Innovation,<br>d'Application et de <span class="hero-accent">Transfert</span></h1>
+<p class="hero-desc">Soumettez votre projet innovant, bénéficiez d'un accompagnement personnalisé par des mentors experts, et transformez votre idée en solution concrète au service du Sénégal.</p>
+<div class="hero-actions">
+<a href="{% url 'register' %}" class="bt hero-bt">Déposer un projet</a>
+<a href="#processus" class="bt b2 hero-bt">Découvrir le processus</a>
+</div>
+<div class="hero-stats">
+<div class="hero-stat"><span class="hero-stat-num">7</span><span class="hero-stat-label">Domaines</span></div>
+<div class="hero-stat"><span class="hero-stat-num">{{ nb_projets }}+</span><span class="hero-stat-label">Projets</span></div>
+<div class="hero-stat"><span class="hero-stat-num">{{ nb_mentors }}</span><span class="hero-stat-label">Mentors</span></div>
+<div class="hero-stat"><span class="hero-stat-num">{{ taux_sel }}%</span><span class="hero-stat-label">Sélectionnés</span></div>
+</div>
+</div>
+</section>
+
+<!-- MISSIONS -->
+<section class="section" id="missions">
+<div class="section-inner">
+<h2 class="section-title">Nos missions</h2>
+<p class="section-subtitle">Le CIAT accompagne l'innovation de l'idée au prototype, en passant par la formation et le mentorat.</p>
+<div class="cards-grid">
+<div class="mission-card">
+<div class="mission-icon">💡</div>
+<h3>Innovation</h3>
+<p>Accueillir les porteurs de projets et stimuler la créativité technologique au sein de l'ISEP.</p>
+</div>
+<div class="mission-card">
+<div class="mission-icon">🔬</div>
+<h3>Application</h3>
+<p>Transformer les idées en prototypes fonctionnels grâce à un accompagnement technique et scientifique.</p>
+</div>
+<div class="mission-card">
+<div class="mission-icon">🤝</div>
+<h3>Transfert</h3>
+<p>Faciliter le passage de l'innovation vers le marché et le tissu économique local.</p>
+</div>
+<div class="mission-card">
+<div class="mission-icon">🎓</div>
+<h3>Formation</h3>
+<p>Partager les bonnes pratiques professionnelles et renforcer les compétences entrepreneuriales.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- PROCESSUS -->
+<section class="section section-alt" id="processus">
+<div class="section-inner">
+<h2 class="section-title">Le parcours d'incubation</h2>
+<p class="section-subtitle">De l'idée au projet abouti, un accompagnement structuré en 5 étapes.</p>
+<div class="process-steps">
+<div class="process-step">
+<div class="step-num">1</div>
+<div class="step-content">
+<h3>Dépôt du dossier</h3>
+<p>Le porteur crée son compte et remplit son dossier : titre, domaine, problème, solution, pièce jointe. L'assistant IA l'aide à rédiger.</p>
+</div>
+</div>
+<div class="process-step">
+<div class="step-num">2</div>
+<div class="step-content">
+<h3>Évaluation par le comité</h3>
+<p>Le comité de sélection note le dossier sur 4 critères (Innovation, Faisabilité, Impact, Équipe) et rend une décision motivée.</p>
+</div>
+</div>
+<div class="process-step">
+<div class="step-num">3</div>
+<div class="step-content">
+<h3>Affectation d'un mentor</h3>
+<p>Le coordonnateur affecte un mentor expert au projet accepté pour un accompagnement personnalisé.</p>
+</div>
+</div>
+<div class="process-step">
+<div class="step-num">4</div>
+<div class="step-content">
+<h3>Suivi par jalons</h3>
+<p>Des étapes clés sont définies avec des échéances. Le mentor suit l'avancement et alerte en cas de retard.</p>
+</div>
+</div>
+<div class="process-step">
+<div class="step-num">5</div>
+<div class="step-content">
+<h3>Bilan et valorisation</h3>
+<p>Le coordonnateur suit les indicateurs via le tableau de bord et produit des exports pour le pilotage.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- DOMAINES -->
+<section class="section" id="domaines">
+<div class="section-inner">
+<h2 class="section-title">Domaines d'intervention</h2>
+<p class="section-subtitle">Sept axes prioritaires pour répondre aux défis du Sénégal.</p>
+<div class="domaines-grid">
+<div class="domaine-tag">💻 TIC, numérique, IA et données</div>
+<div class="domaine-tag">⚙️ Mécanique, fabrication et maintenance</div>
+<div class="domaine-tag">🌾 Agriculture, transformation et environnement</div>
+<div class="domaine-tag">⚡ Énergie et énergies renouvelables</div>
+<div class="domaine-tag">💊 Pharmaceutique et biomédical</div>
+<div class="domaine-tag">📚 Éducation, formation et insertion</div>
+<div class="domaine-tag">🏛️ Services aux collectivités et entrepreneuriat</div>
+</div>
+</div>
+</section>
+
+<!-- IA -->
+<section class="section section-alt" id="ia">
+<div class="section-inner">
+<div class="ia-banner">
+<div class="ia-text">
+<h2 class="section-title" style="text-align:left">🤖 Assistant IA intégré</h2>
+<p>Notre plateforme intègre un assistant d'intelligence artificielle générative pour vous aider à rédiger votre dossier. Reformulez vos idées, générez un pitch ou une analyse SWOT en quelques secondes.</p>
+<ul class="ia-features">
+<li>✏️ <strong>Reformulation</strong> — Clarifiez vos textes de façon professionnelle</li>
+<li>🎤 <strong>Pitch</strong> — Obtenez un pitch percutant en 4 phrases</li>
+<li>📊 <strong>Analyse SWOT</strong> — Identifiez forces, faiblesses, opportunités et menaces</li>
+</ul>
+<p class="sm">L'IA propose, vous décidez : aucun texte n'est enregistré sans votre validation.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="section cta-section">
+<div class="section-inner" style="text-align:center">
+<h2 class="section-title">Prêt à innover ?</h2>
+<p class="section-subtitle">Rejoignez l'incubateur du CIAT et transformez votre idée en réalité.</p>
+<div class="hero-actions" style="justify-content:center;margin-top:24px">
+<a href="{% url 'register' %}" class="bt hero-bt">Créer mon compte gratuitement</a>
+<a href="{% url 'login' %}" class="bt b2 hero-bt">J'ai déjà un compte</a>
+</div>
+</div>
+</section>
+
+<footer>
+<div class="footer-row"><span>© 2026 CIAT — Centre d'Innovation, d'Application et de Transfert</span><span>·</span>
+<a href="https://isep.sn" target="_blank">ISEP Amadou Trawaré de Diamniadio</a></div>
+<div class="sm">Plateforme de gestion de l'incubateur — Développée dans le cadre du cours d'IA générative</div>
+</footer></body></html>
