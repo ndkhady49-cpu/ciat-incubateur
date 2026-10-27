@@ -60,3 +60,15 @@ class JalonForm(forms.ModelForm):
     class Meta:
         model = Jalon
         fields = ["title", "due"]
+
+
+class ProfilForm(forms.Form):
+    name = forms.CharField(label="Nom complet", max_length=120)
+    genre = forms.ChoiceField(label="Genre", required=False,
+                              choices=[("", "Non précisé"), ("Femme", "Femme"), ("Homme", "Homme")])
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields["name"].initial = user.get_full_name() or user.username
+            self.fields["genre"].initial = user.genre

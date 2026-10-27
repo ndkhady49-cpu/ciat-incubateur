@@ -1,0 +1,28 @@
+{% extends "layout.html" %}{% block t %}Mon profil — CIAT Incubateur{% endblock %}{% block c %}
+<h1>Mon profil</h1>
+<div class="rw">
+<div class="cd">
+<div class="profil-avatar">{{ user.first_name|first|upper }}</div>
+<div class="profil-info"><strong>{{ user.nom }}</strong><br><span class="sm">{{ user.email }} · {{ user.get_role_display }}</span></div>
+<form method="post">{% csrf_token %}{% include "partials/champs.html" %}
+<p style="margin-top:16px"><button>Enregistrer les modifications</button></p></form>
+</div>
+<div class="cd">
+<h2>Informations du compte</h2>
+<p><strong>Rôle :</strong> {{ user.get_role_display }}</p>
+<p><strong>E-mail :</strong> {{ user.email }}</p>
+<p><strong>Genre :</strong> {{ user.get_genre_display|default:"Non précisé" }}</p>
+<p><strong>Membre depuis :</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+{% if user.role == 'porteur' %}
+<h2 style="margin-top:20px">Mes projets</h2>
+{% for p in user.projets.all %}<p><a href="{% url 'projet' p.pk %}">{{ p.title }}</a>
+<span class="tg {% if p.status == 'accepte' %}ok{% elif p.status == 'refuse' %}ko{% endif %}">{{ p.get_status_display }}</span></p>
+{% empty %}<p class="sm">Aucun projet déposé.</p>{% endfor %}
+{% elif user.role == 'mentor' %}
+<h2 style="margin-top:20px">Projets suivis</h2>
+{% for p in user.projets_suivis.all %}<p><a href="{% url 'projet' p.pk %}">{{ p.title }}</a>
+<span class="tg ok">{{ p.get_status_display }}</span></p>
+{% empty %}<p class="sm">Aucun projet affecté.</p>{% endfor %}
+{% endif %}
+</div>
+</div>{% endblock %}

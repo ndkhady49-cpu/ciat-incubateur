@@ -13,7 +13,7 @@ from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import EvaluationForm, JalonForm, ProjetForm, RegisterForm
+from .forms import EvaluationForm, JalonForm, ProfilForm, ProjetForm, RegisterForm
 from .ia import CONSIGNES, suggestion_ia
 from .models import DOMAINES, STATUTS, Jalon, Projet, User
 
@@ -261,3 +261,16 @@ def ia_accepter(request):
     p.save()
     messages.success(request, "Texte validé et enregistré (rédigé avec l'aide d'une IA).")
     return redirect("projet", pk=p.pk)
+
+
+# ---------- profil ----------
+@role_required()
+def profil(request):
+    form = ProfilForm(request.POST or None, user=request.user)
+    if request.method == "POST" and form.is_valid():
+        request.user.first_name = form.cleaned_data["name"]
+        request.user.genre = form.cleaned_data["genre"]
+        request.user.save(update_fields=["first_name", "genre"])
+        messages.success(request, "Profil mis à jour.")
+        return redirect("profil")
+    return render(request, "profil.html", {"form": form})

@@ -23,4 +23,5 @@ urlpatterns = [
     path("export.xlsx", views.export_xlsx, name="export_xlsx"),
     path("ia/", views.ia, name="ia"),
     path("ia/accepter/", views.ia_accepter, name="ia_accepter"),
+    path("profil/", views.profil, name="profil"),
 ]
