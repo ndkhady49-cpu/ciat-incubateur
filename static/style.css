@@ -105,7 +105,7 @@ form.inl{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
 .hero-header nav a::after{background:var(--brun-300)}
 
 /* Hero section */
-.hero{background:linear-gradient(135deg,var(--brun-700) 0%,var(--brun-800) 50%,#1a0f08 100%);color:var(--blanc);padding:80px 20px 60px;text-align:center;position:relative;overflow:hidden}
+.hero{background:linear-gradient(135deg,rgba(43,26,16,.85) 0%,rgba(74,46,31,.8) 50%,rgba(26,15,8,.9) 100%),url('/static/banner.jpg') center/cover no-repeat;color:var(--blanc);padding:80px 20px 60px;text-align:center;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 50%,rgba(176,122,79,.15) 0%,transparent 50%);animation:heroGlow 8s ease-in-out infinite alternate}
 @keyframes heroGlow{0%{transform:translate(0,0)}100%{transform:translate(5%,3%)}}
 .hero-content{position:relative;z-index:1;max-width:800px;margin:0 auto}
