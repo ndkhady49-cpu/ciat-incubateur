@@ -31,6 +31,10 @@ Le texte suggéré n'est enregistré qu'après relecture et validation du porteu
 objectifs, documents et preuves, commentaires, calendrier, suivis 3/6 mois, compte rendu IA, tableau de bord, exports,
 assistant IA.
 
+## Analyse des données
+`python manage.py analyse` : indicateurs (sélection par cohorte, domaine et genre, grille d'évaluation, jalons,
+suivis 3/6 mois, emplois) et contrôle de qualité des données. Résultats commentés dans `docs/rapport.md`.
+
 ## Déploiement (lien pour le jury)
 Variables : `DJANGO_DEBUG=0`, `DJANGO_SECRET_KEY` (valeur secrète longue), `DJANGO_ALLOWED_HOSTS` (ex. monsite.onrender.com),
 `DJANGO_CSRF_ORIGINS` (ex. https://monsite.onrender.com). Commande de build : `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py makemigrations incubateur && python manage.py migrate && python manage.py seed`.
