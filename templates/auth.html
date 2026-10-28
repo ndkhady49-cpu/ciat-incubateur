@@ -1,10 +1,32 @@
-{% extends "layout.html" %}{% block c %}
-<div class="cd" style="max-width:440px;margin:20px auto;width:100%">
-<h1>{% if mode == 'login' %}Connexion{% elif mode == 'password' %}Changer mon mot de passe{% else %}Créer un compte porteur de projet{% endif %}</h1>
-{% if bloque %}<div class="fl">Trop de tentatives de connexion. Réessayez dans 15 minutes.</div>{% endif %}
-<form method="post">{% csrf_token %}{% include "partials/champs.html" %}
-<p><button style="width:100%;margin-top:14px">{% if mode == 'login' %}Se connecter{% elif mode == 'password' %}Enregistrer{% else %}Créer mon compte{% endif %}</button></p></form>
-{% if mode == 'login' %}<p class="sm" style="text-align:center"><a href="{% url 'register' %}">Pas de compte ? Créer un compte</a></p>
-<p class="sm" style="text-align:center">Mot de passe oublié ? Contactez la coordination du CIAT, qui peut le réinitialiser.</p>
-{% elif mode == 'register' %}<p class="sm" style="text-align:center"><a href="{% url 'login' %}">Déjà inscrit ? Se connecter</a></p>
-{% else %}<p class="sm" style="text-align:center"><a href="{% url 'profil' %}">Annuler</a></p>{% endif %}</div>{% endblock %}
+{% extends "layout.html" %}{% load static %}
+{% block t %}{% if mode == 'login' %}Connexion{% elif mode == 'password' %}Mot de passe{% else %}Créer un compte{% endif %} — CIAT Incubateur{% endblock %}
+{% block corps %}{% if mode == 'password' %}{{ block.super }}{% else %}
+<div class="auth">
+<section class="auth-visuel">
+<a class="brand" href="/"><img src="{% static 'logo-mark.svg' %}" alt=""><div><b>CIAT</b><span>Incubateur · ISEP Diamniadio</span></div></a>
+<div><h2>De l'idée au projet incubé, un seul espace de suivi.</h2>
+<p>Dépôt du dossier, évaluation par le comité, accompagnement par un mentor et suivi après l'incubation.</p>
+<ul class="auth-points">
+<li><svg class="i"><use href="#i-file"/></svg>Un dossier complet, avec vos documents</li>
+<li><svg class="i"><use href="#i-users"/></svg>Un mentor et des jalons clairs</li>
+<li><svg class="i"><use href="#i-sparkles"/></svg>Un assistant IA pour rédiger, sous votre contrôle</li></ul></div>
+<p class="sm" style="color:var(--brun-300)">Centre d'Innovation, d'Application et de Transfert</p>
+</section>
+<section class="auth-form"><div class="auth-boite">
+<h1>{% if mode == 'login' %}Connexion{% else %}Créer un compte{% endif %}</h1>
+<p class="lead">{% if mode == 'login' %}Accédez à votre espace porteur, comité, mentor ou coordination.{% else %}Compte porteur de projet : déposez votre dossier dès maintenant.{% endif %}</p>
+{% for m in messages %}<div class="fl {{ m.tags }}" style="margin-top:16px">{{ m }}</div>{% endfor %}
+{% if bloque %}<div class="fl error" style="margin-top:16px">Trop de tentatives de connexion. Réessayez dans 15 minutes.</div>{% endif %}
+<div class="cd"><form method="post">{% csrf_token %}{% include "partials/champs.html" %}
+<button style="width:100%;margin-top:20px">{% if mode == 'login' %}Se connecter{% else %}Créer mon compte{% endif %}</button></form></div>
+{% if mode == 'login' %}<p class="auth-lien">Pas encore de compte ? <a href="{% url 'register' %}">Créer un compte porteur</a></p>
+<p class="auth-lien" style="margin-top:6px">Mot de passe oublié ? Contactez la coordination du CIAT, qui peut le réinitialiser.</p>
+{% else %}<p class="auth-lien">Déjà inscrit ? <a href="{% url 'login' %}">Se connecter</a></p>{% endif %}
+</div></section>
+</div>{% endif %}{% endblock %}
+{% block c %}
+<div class="page-head"><div><a class="retour" href="{% url 'profil' %}"><svg class="i i-sm"><use href="#i-chevron-left"/></svg>Mon profil</a>
+<h1>Changer mon mot de passe</h1><p class="lead">Choisissez un mot de passe d'au moins 8 caractères, que vous n'utilisez pas ailleurs.</p></div></div>
+<div class="cd" style="max-width:520px"><form method="post">{% csrf_token %}{% include "partials/champs.html" %}
+<div class="form-actions"><button>Enregistrer</button><a class="bt b2" href="{% url 'profil' %}">Annuler</a></div></form></div>
+{% endblock %}

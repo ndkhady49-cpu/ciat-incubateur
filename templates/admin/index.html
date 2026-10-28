@@ -1,0 +1,17 @@
+{% extends "admin/index.html" %}{% load ciat_admin %}
+{% block content %}{% ciat_stats as s %}
+<div class="ciat-kpis">
+<div class="ciat-kpi"><b>{{ s.projets }}</b><span>Dossiers déposés</span></div>
+<div class="ciat-kpi"><b>{{ s.a_evaluer }}</b><span>Dossiers à évaluer</span></div>
+<div class="ciat-kpi"><b>{{ s.acceptes }}</b><span>Projets accompagnés</span></div>
+<div class="ciat-kpi {% if s.retards %}alerte{% endif %}"><b>{{ s.retards }}</b><span>Jalons en retard</span></div>
+<div class="ciat-kpi"><b>{{ s.utilisateurs }}</b><span>Comptes actifs</span></div>
+</div>
+<div class="ciat-raccourcis">
+<a class="principal" href="{% url 'dashboard' %}">Tableau de bord de la plateforme</a>
+<a href="{% url 'admin:incubateur_user_add' %}">+ Créer un compte (mentor, comité…)</a>
+<a href="{% url 'admin:incubateur_projet_changelist' %}?status__exact=soumis">Dossiers soumis</a>
+<a href="{% url 'admin:incubateur_jalon_changelist' %}">Jalons</a>
+<a href="{% url 'export_xlsx' %}">Export Excel</a>
+</div>
+{{ block.super }}{% endblock %}

@@ -1,7 +1,37 @@
-{% extends "layout.html" %}{% block c %}
-<div class="rw" style="align-items:center"><h1>{% if user.role == 'porteur' %}Mon dossier{% else %}Projets{% endif %}</h1>
-{% if user.role == 'porteur' %}<div style="text-align:right"><a class="bt" href="{% url 'projet_nouveau' %}">+ Déposer un dossier</a></div>{% endif %}</div>
-<div class="cd" style="overflow-x:auto"><table><tr><th>Titre</th><th>Porteur</th><th>Domaine</th><th>Cohorte</th><th>Statut</th></tr>
-{% for p in rows %}<tr><td><a href="{% url 'projet' p.pk %}">{{ p.title }}</a></td><td>{{ p.owner.nom }}</td><td>{{ p.domain }}</td><td>{{ p.cohort }}</td>
-<td><span class="tg {% if p.status == 'accepte' %}ok{% elif p.status == 'refuse' %}ko{% endif %}">{{ p.get_status_display }}</span></td></tr>
-{% empty %}<tr><td colspan="5" class="sm">Aucun projet pour le moment.</td></tr>{% endfor %}</table></div>{% endblock %}
+{% extends "layout.html" %}{% block t %}{% if user.role == 'porteur' %}Mes dossiers{% else %}Projets{% endif %} — CIAT Incubateur{% endblock %}{% block c %}
+<div class="page-head"><div>
+<p class="eyebrow">{% if user.role == 'porteur' %}Espace porteur{% elif user.role == 'mentor' %}Espace mentor{% else %}Incubateur{% endif %}</p>
+<h1>{% if user.role == 'porteur' %}Mes dossiers{% elif user.role == 'mentor' %}Mes projets suivis{% else %}Projets{% endif %}</h1>
+<p class="lead">{% if user.role == 'porteur' %}Suivez l'état de vos dossiers et complétez-les tant qu'ils ne sont pas décidés.{% elif user.role == 'mentor' %}Les projets dont vous assurez l'accompagnement.{% else %}{{ rows|length }} dossier{{ rows|length|pluralize }} déposé{{ rows|length|pluralize }}.{% endif %}</p></div>
+{% if user.role == 'porteur' %}<div class="page-actions"><a class="bt" href="{% url 'projet_nouveau' %}"><svg class="i"><use href="#i-plus"/></svg>Déposer un dossier</a></div>{% endif %}</div>
+
+<div class="cd">
+{% if rows %}
+<div class="outils">
+<div class="recherche"><svg class="i"><use href="#i-search"/></svg><input type="search" id="q" placeholder="Rechercher un projet, un porteur, un domaine…" aria-label="Rechercher"></div>
+<div class="puces" role="group" aria-label="Filtrer par statut">
+<button type="button" class="puce actif" data-statut="">Tous</button>
+<button type="button" class="puce" data-statut="soumis">Soumis</button>
+<button type="button" class="puce" data-statut="a_completer">À compléter</button>
+<button type="button" class="puce" data-statut="accepte">Acceptés</button>
+<button type="button" class="puce" data-statut="refuse">Refusés</button>
+</div></div>
+<div class="table-wrap"><table class="table-cartes"><thead><tr><th>Projet</th><th class="col-cache">Porteur</th><th>Domaine</th><th>Cohorte</th><th>Statut</th></tr></thead>
+<tbody id="lignes">{% for p in rows %}<tr data-statut="{{ p.status }}">
+<td class="cellule-titre"><a href="{% url 'projet' p.pk %}">{{ p.title }}</a><small>Déposé le {{ p.created|date:"d/m/Y" }}</small></td>
+<td class="col-cache">{{ p.owner.nom }}</td><td>{{ p.domain }}</td><td>{{ p.cohort }}</td>
+<td class="col-statut"><span class="tg st-{{ p.status }}">{{ p.get_status_display }}</span></td></tr>{% endfor %}</tbody></table>
+<p class="vide" id="aucun" hidden style="padding:16px 22px">Aucun projet ne correspond à la recherche.</p></div>
+{% else %}
+<div class="empty"><div class="empty-icon"><svg class="i"><use href="#i-folder"/></svg></div>
+<h1 style="font-size:20px">{% if user.role == 'porteur' %}Aucun dossier pour l'instant{% else %}Aucun projet{% endif %}</h1>
+<p>{% if user.role == 'porteur' %}Déposez votre premier dossier : vous pourrez le compléter avant l'évaluation.{% elif user.role == 'mentor' %}Aucun projet ne vous est encore affecté.{% else %}Les dossiers déposés apparaîtront ici.{% endif %}</p>
+{% if user.role == 'porteur' %}<p style="margin-top:18px"><a class="bt" href="{% url 'projet_nouveau' %}"><svg class="i"><use href="#i-plus"/></svg>Déposer un dossier</a></p>{% endif %}</div>
+{% endif %}</div>
+{% endblock %}
+{% block js %}<script>
+(function(){var q=document.getElementById('q');if(!q)return;var statut='',lignes=[].slice.call(document.querySelectorAll('#lignes tr'));
+function filtrer(){var t=q.value.toLowerCase().trim(),n=0;lignes.forEach(function(l){var ok=(!statut||l.dataset.statut===statut)&&(!t||l.textContent.toLowerCase().indexOf(t)>-1);l.hidden=!ok;if(ok)n++});document.getElementById('aucun').hidden=n>0}
+q.addEventListener('input',filtrer);
+document.querySelectorAll('.puce').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('.puce').forEach(function(x){x.classList.remove('actif')});b.classList.add('actif');statut=b.dataset.statut;filtrer()})});})();
+</script>{% endblock %}

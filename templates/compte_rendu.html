@@ -1,14 +1,16 @@
 {% extends "layout.html" %}{% block t %}Compte rendu — {{ p.title }}{% endblock %}{% block c %}
-<h1>Compte rendu de suivi</h1>
-<p class="sm"><a href="{% url 'projet' p.pk %}">← {{ p.title }}</a> · L'IA prépare un brouillon à partir des seules données du projet
-(objectifs, jalons, preuves, commentaires, suivis). Relisez-le et corrigez-le : rien n'est enregistré sans votre validation.</p>
-<div class="rw"><form class="cd" method="post">{% csrf_token %}<input type="hidden" name="action" value="generer">
-<h2>1. Générer un brouillon</h2><p class="sm">Le brouillon remplace le texte en cours de rédaction.</p>
-<p style="margin-top:12px"><button>🤖 Générer avec l'IA</button></p></form></div>
+<div class="page-head"><div><a class="retour" href="{% url 'projet' p.pk %}"><svg class="i i-sm"><use href="#i-chevron-left"/></svg>{{ p.title }}</a>
+<p class="eyebrow">Suivi</p><h1>Compte rendu de suivi</h1>
+<p class="lead">L'IA prépare un brouillon à partir des seules données du projet (objectifs, jalons, preuves, commentaires, suivis). Relisez-le et corrigez-le : rien n'est enregistré sans votre validation.</p></div></div>
+<div class="grille-2">
 <form class="cd" method="post">{% csrf_token %}<input type="hidden" name="action" value="valider">
 <input type="hidden" name="ia_used" value="{% if ia_used %}1{% else %}0{% endif %}">
-<h2>2. Relire et valider</h2>
-{% if src %}<p class="fl">Brouillon {% if src == 'IA' %}généré par l'IA{% else %}produit en mode démonstration (aucune clé API configurée), à partir des données du projet{% endif %} : vérifiez chaque information avant de valider.</p>{% endif %}
+<h2><svg class="i"><use href="#i-edit"/></svg>Relire et valider</h2>
+{% if src %}<div class="fl info" style="margin-bottom:6px">Brouillon {% if src == 'IA' %}généré par l'IA{% else %}produit en mode démonstration (aucune clé API configurée), à partir des données du projet{% endif %} : vérifiez chaque information avant de valider.</div>{% endif %}
 {% include "partials/champs.html" %}
-<p style="margin-top:14px"><button>Valider et enregistrer</button> <a class="bt b2" href="{% url 'projet' p.pk %}">Annuler</a></p></form>
-{% endblock %}
+<div class="form-actions"><button><svg class="i"><use href="#i-check"/></svg>Valider et enregistrer</button><a class="bt b2" href="{% url 'projet' p.pk %}">Annuler</a></div></form>
+<form class="cd" method="post">{% csrf_token %}<input type="hidden" name="action" value="generer">
+<h2><svg class="i"><use href="#i-sparkles"/></svg>Brouillon automatique</h2>
+<p class="sm">Le brouillon remplace le texte en cours de rédaction. Il contient : situation générale, avancement des jalons, points de vigilance et prochaines étapes.</p>
+<div class="form-actions"><button class="b2"><svg class="i"><use href="#i-sparkles"/></svg>Générer avec l'IA</button></div></form>
+</div>{% endblock %}

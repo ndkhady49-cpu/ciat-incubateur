@@ -1,29 +1,18 @@
 {% extends "layout.html" %}{% block t %}Mon profil — CIAT Incubateur{% endblock %}{% block c %}
-<h1>Mon profil</h1>
-<div class="rw">
-<div class="cd">
-<div class="profil-avatar">{{ user.first_name|first|upper }}</div>
-<div class="profil-info"><strong>{{ user.nom }}</strong><br><span class="sm">{{ user.email }} · {{ user.get_role_display }}</span></div>
+<div class="page-head"><div><p class="eyebrow">Compte</p><h1>Mon profil</h1></div></div>
+<div class="grille-2">
+<div class="cd"><h2><svg class="i"><use href="#i-user"/></svg>Informations personnelles</h2>
 <form method="post">{% csrf_token %}{% include "partials/champs.html" %}
-<p style="margin-top:16px"><button>Enregistrer les modifications</button></p></form>
-</div>
-<div class="cd">
-<h2>Informations du compte</h2>
-<p><strong>Rôle :</strong> {{ user.get_role_display }}</p>
-<p><strong>E-mail :</strong> {{ user.email }}</p>
-<p><strong>Genre :</strong> {{ user.get_genre_display|default:"Non précisé" }}</p>
-<p><strong>Membre depuis :</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
-<p><a class="bt b2" href="{% url 'mot_de_passe' %}">Changer mon mot de passe</a></p>
-{% if user.role == 'porteur' %}
-<h2 style="margin-top:20px">Mes projets</h2>
-{% for p in user.projets.all %}<p><a href="{% url 'projet' p.pk %}">{{ p.title }}</a>
-<span class="tg {% if p.status == 'accepte' %}ok{% elif p.status == 'refuse' %}ko{% endif %}">{{ p.get_status_display }}</span></p>
-{% empty %}<p class="sm">Aucun projet déposé.</p>{% endfor %}
-{% elif user.role == 'mentor' %}
-<h2 style="margin-top:20px">Projets suivis</h2>
-{% for p in user.projets_suivis.all %}<p><a href="{% url 'projet' p.pk %}">{{ p.title }}</a>
-<span class="tg ok">{{ p.get_status_display }}</span></p>
-{% empty %}<p class="sm">Aucun projet affecté.</p>{% endfor %}
-{% endif %}
-</div>
-</div>{% endblock %}
+<div class="form-actions"><button>Enregistrer les modifications</button></div></form></div>
+<div class="pile">
+<div class="cd profil-carte"><div class="avatar">{{ user.nom|first|upper }}</div><h3>{{ user.nom }}</h3>
+<p class="sm">{{ user.email }}</p><p style="margin-top:10px"><span class="tg sans-point">{{ user.get_role_display }}</span></p>
+<dl class="infos" style="margin-top:18px;text-align:left"><dt>Genre</dt><dd>{{ user.get_genre_display|default:"Non précisé" }}</dd>
+<dt>Membre depuis</dt><dd>{{ user.date_joined|date:"d/m/Y" }}</dd></dl>
+<p style="margin-top:18px"><a class="bt b2" href="{% url 'mot_de_passe' %}"><svg class="i"><use href="#i-lock"/></svg>Changer mon mot de passe</a></p></div>
+{% if user.role == 'porteur' or user.role == 'mentor' %}<div class="cd"><h2><svg class="i"><use href="#i-folder"/></svg>{% if user.role == 'porteur' %}Mes dossiers{% else %}Projets suivis{% endif %}</h2>
+<ul class="docs">{% if user.role == 'porteur' %}{% for p in user.projets.all %}<li><a href="{% url 'projet' p.pk %}">{{ p.title }}</a><span class="tg st-{{ p.status }}">{{ p.get_status_display }}</span></li>
+{% empty %}<li class="sm">Aucun dossier déposé.</li>{% endfor %}
+{% else %}{% for p in user.projets_suivis.all %}<li><a href="{% url 'projet' p.pk %}">{{ p.title }}</a><span class="tg st-{{ p.status }}">{{ p.get_status_display }}</span></li>
+{% empty %}<li class="sm">Aucun projet affecté.</li>{% endfor %}{% endif %}</ul></div>{% endif %}
+</div></div>{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "admin/base.html" %}{% load static %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Administration CIAT{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="icon" href="{% static 'logo-mark.svg' %}" type="image/svg+xml">
+<link rel="stylesheet" href="{% static 'admin_ciat.css' %}">{% endblock %}
+{% block branding %}<div id="site-name"><a href="{% url 'admin:index' %}"><img src="{% static 'logo-mark.svg' %}" alt="">
+<span>CIAT Incubateur<small>Administration · ISEP Amadou Trawaré</small></span></a></div>
+{% if user.is_anonymous %}{% include "admin/color_theme_toggle.html" %}{% endif %}{% endblock %}
+{% block nav-global %}{% endblock %}

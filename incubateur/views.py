@@ -521,7 +521,7 @@ def dashboard(request):
         "statuts": {"labels": [lib for lib, n, pct in stats["st"]], "data": [n for lib, n, pct in stats["st"]]},
         "jalons": {"labels": ["Validés", "En cours", "À faire", "En retard"],
                    "data": [jalons_valides, jalons_encours, jalons_afaire, jalons_retard]},
-        "domaines": {"labels": [r["k"][:25] for r in par_domaine], "data": [r["n"] for r in par_domaine],
+        "domaines": {"labels": [r["k"] for r in par_domaine], "data": [r["n"] for r in par_domaine],
                      "ok": [r["ok"] for r in par_domaine]},
         "cohortes": {"labels": [r["k"] for r in par_cohorte], "data": [r["n"] for r in par_cohorte],
                      "ok": [r["ok"] for r in par_cohorte]},

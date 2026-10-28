@@ -1,0 +1,109 @@
+/* === Administration CIAT : charte ISEP appliquée à l'admin Django (thèmes clair et sombre) === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root, html[data-theme="light"] {
+  --primary: #B07A4F; --secondary: #4A2E1F; --accent: #E6C89F; --primary-fg: #fff;
+  --body-fg: #2B1A10; --body-bg: #FFFFFF; --body-quiet-color: #76604F; --body-medium-color: #4A2E1F; --body-loud-color: #1F120B;
+  --header-color: #F2E6D6; --header-branding-color: #fff; --header-bg: #2B1A10; --header-link-color: #F2E6D6;
+  --breadcrumbs-fg: #C9A87C; --breadcrumbs-link-fg: #F8F2EA; --breadcrumbs-bg: #4A2E1F;
+  --link-fg: #8A5530; --link-hover-color: #4A2E1F; --link-selected-fg: #4A2E1F;
+  --hairline-color: #EFE4D6; --border-color: #E0D0BC; --error-fg: #A12A33;
+  --message-success-bg: #E2F1E6; --message-warning-bg: #FBEFD5; --message-error-bg: #FBE4E5;
+  --darkened-bg: #F8F2EA; --selected-bg: #F2E6D6; --selected-row: #FBF3E6;
+  --button-fg: #fff; --button-bg: #4A2E1F; --button-hover-bg: #2B1A10;
+  --default-button-bg: #B07A4F; --default-button-hover-bg: #8F5F3A;
+  --close-button-bg: #8B6B53; --close-button-hover-bg: #6B4A35;
+  --delete-button-bg: #A12A33; --delete-button-hover-bg: #821F27;
+  --object-tools-fg: #fff; --object-tools-bg: #4A2E1F; --object-tools-hover-bg: #B07A4F;
+  --font-family-primary: "Inter", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --ciat-rayon: 12px; --ciat-ombre: 0 1px 2px rgba(43,26,16,.06), 0 4px 14px rgba(43,26,16,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary: #8F5F3A; --secondary: #2B1A10; --primary-fg: #FFF8EF;
+    --body-fg: #EDE3D8; --body-bg: #17100B; --body-quiet-color: #BCA894; --body-medium-color: #DCCBB8; --body-loud-color: #fff;
+    --header-bg: #120B07; --breadcrumbs-bg: #2B1A10; --breadcrumbs-link-fg: #F2E6D6;
+    --link-fg: #D8B48A; --link-hover-color: #F2D7B3; --link-selected-fg: #F2D7B3;
+    --hairline-color: #2E2119; --border-color: #47362A; --error-fg: #F08A92;
+    --message-success-bg: #18361F; --message-warning-bg: #3A2D10; --message-error-bg: #3D1A1D;
+    --darkened-bg: #211710; --selected-bg: #3A2A1E; --selected-row: #2C2015;
+    --button-bg: #8F5F3A; --button-hover-bg: #B07A4F; --default-button-bg: #B07A4F; --default-button-hover-bg: #C9A87C;
+    --close-button-bg: #5A4636; --close-button-hover-bg: #6B5545; --object-tools-bg: #3A2A1E; --object-tools-hover-bg: #8F5F3A;
+  }
+}
+html[data-theme="dark"] {
+  --primary: #8F5F3A; --secondary: #2B1A10; --primary-fg: #FFF8EF;
+  --body-fg: #EDE3D8; --body-bg: #17100B; --body-quiet-color: #BCA894; --body-medium-color: #DCCBB8; --body-loud-color: #fff;
+  --header-bg: #120B07; --breadcrumbs-bg: #2B1A10; --breadcrumbs-link-fg: #F2E6D6;
+  --link-fg: #D8B48A; --link-hover-color: #F2D7B3; --link-selected-fg: #F2D7B3;
+  --hairline-color: #2E2119; --border-color: #47362A; --error-fg: #F08A92;
+  --message-success-bg: #18361F; --message-warning-bg: #3A2D10; --message-error-bg: #3D1A1D;
+  --darkened-bg: #211710; --selected-bg: #3A2A1E; --selected-row: #2C2015;
+  --button-bg: #8F5F3A; --button-hover-bg: #B07A4F; --default-button-bg: #B07A4F; --default-button-hover-bg: #C9A87C;
+  --close-button-bg: #5A4636; --close-button-hover-bg: #6B5545; --object-tools-bg: #3A2A1E; --object-tools-hover-bg: #8F5F3A;
+}
+
+/* ---------- En-tête ---------- */
+body { font-size: 14.5px; }
+#header { padding: 12px 28px; border-bottom: 3px solid var(--primary); align-items: center; }
+#branding h1, #site-name { font-weight: 800; letter-spacing: -.2px; }
+#site-name a { display: inline-flex; align-items: center; gap: 12px; }
+#site-name img { width: 38px; height: 38px; }
+#site-name small { display: block; font-size: 11.5px; font-weight: 500; color: var(--accent); letter-spacing: .4px; }
+#user-tools { font-size: 12.5px; text-transform: none; letter-spacing: 0; }
+#user-tools a, #logout-form button { border-bottom: 0; }
+#user-tools a:hover, #logout-form button:hover { color: var(--accent); text-decoration: none; }
+div.breadcrumbs { padding: 10px 28px; font-size: 13px; }
+#content { padding: 24px 28px; }
+#content h1 { font-weight: 800; color: var(--body-loud-color); letter-spacing: -.3px; }
+
+/* ---------- Modules et barre latérale ---------- */
+.module { border-radius: var(--ciat-rayon); overflow: hidden; box-shadow: var(--ciat-ombre); border: 1px solid var(--hairline-color); }
+.module h2, .module caption, .inline-group h2 { background: var(--secondary); font-size: 12.5px; font-weight: 700; letter-spacing: .6px; padding: 10px 14px; }
+html[data-theme="dark"] .module h2, html[data-theme="dark"] .module caption { background: #2B1A10; }
+#nav-sidebar .module { box-shadow: none; }
+#nav-sidebar .current-model { background: var(--selected-bg); }
+#nav-sidebar .current-model a { font-weight: 700; }
+#nav-filter { border-radius: 8px; }
+.toggle-nav-sidebar { border-radius: 0 8px 8px 0; }
+
+/* ---------- Boutons et champs ---------- */
+.button, input[type=submit], input[type=button], .submit-row input, a.button { border-radius: 9px; font-weight: 600; padding: 9px 16px; }
+.submit-row { border-radius: var(--ciat-rayon); }
+.object-tools a { border-radius: 99px; font-weight: 600; letter-spacing: .3px; }
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=number], input[type=tel],
+textarea, select, .vTextField { border-radius: 8px; border-color: var(--border-color); padding: 7px 10px; }
+input:focus, textarea:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(176,122,79,.2); outline: none; }
+
+/* ---------- Listes ---------- */
+#changelist .actions { border-radius: 10px; }
+#changelist-filter { border-radius: var(--ciat-rayon); overflow: hidden; }
+#changelist-filter h2 { background: var(--secondary); }
+#changelist-filter li.selected a { color: var(--link-fg); font-weight: 700; }
+#result_list thead th { font-size: 11.5px; letter-spacing: .5px; }
+#result_list tbody tr:hover { background: var(--selected-row); }
+.paginator { border-top: 0; }
+#toolbar { border-radius: 10px; }
+
+/* ---------- Badges (statuts, rôles) ---------- */
+.ciat-badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.ciat-ok { background: #E2F1E6; color: #1E6F3E; } .ciat-ko { background: #FBE4E5; color: #A12A33; }
+.ciat-warn { background: #FBEFD5; color: #8A5A00; } .ciat-info { background: #E5ECF6; color: #2F4F7F; }
+.ciat-neutre { background: #F2E6D6; color: #6B4A35; }
+.ciat-barre { display: inline-block; width: 46px; height: 7px; background: #F2E6D6; border-radius: 99px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.ciat-barre i { display: block; height: 100%; background: #B07A4F; }
+
+/* ---------- Accueil de l'admin : indicateurs ---------- */
+.ciat-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 0 0 22px; }
+.ciat-kpi { background: var(--body-bg); border: 1px solid var(--hairline-color); border-radius: var(--ciat-rayon); padding: 14px 16px; box-shadow: var(--ciat-ombre); }
+.ciat-kpi b { display: block; font-size: 26px; font-weight: 800; color: var(--body-loud-color); line-height: 1.2; }
+.ciat-kpi span { font-size: 12.5px; color: var(--body-quiet-color); font-weight: 600; }
+.ciat-kpi.alerte b { color: var(--error-fg); }
+.ciat-raccourcis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.ciat-raccourcis a { display: inline-block; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--border-color); color: var(--body-medium-color); font-weight: 600; }
+.ciat-raccourcis a:hover { border-color: var(--primary); color: var(--link-hover-color); text-decoration: none; }
+.ciat-raccourcis a.principal { background: var(--secondary); border-color: var(--secondary); color: #fff; }
+
+/* ---------- Page de connexion ---------- */
+.login #container { border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(43,26,16,.18); }
+.login #header { justify-content: center; }

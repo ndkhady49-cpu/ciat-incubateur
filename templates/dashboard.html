@@ -1,208 +1,90 @@
 {% extends "layout.html" %}{% block t %}Tableau de bord — CIAT Incubateur{% endblock %}{% block c %}
-<div class="dash-header">
-<h1>📊 Tableau de bord</h1>
-<div class="dash-actions">
-{% if user.role == 'coordo' %}<a class="bt b2" href="{% url 'export_xlsx' %}">📥 Exporter en Excel</a>{% endif %}
-<a class="bt b2" href="{% url 'projets' %}">📁 Voir les projets</a>
-</div>
-</div>
+<div class="page-head"><div><p class="eyebrow">Pilotage</p><h1>Tableau de bord</h1>
+<p class="lead">Sélection, accompagnement et suivi après l'incubation{% if f.cohort or f.domain or f.status %} — vue filtrée{% endif %}.</p></div>
+<div class="page-actions">{% if user.role == 'coordo' %}<a class="bt b2" href="{% url 'export_xlsx' %}"><svg class="i"><use href="#i-download"/></svg>Exporter en Excel</a>{% endif %}
+<a class="bt b2" href="{% url 'calendrier' %}"><svg class="i"><use href="#i-calendar"/></svg>Calendrier</a></div></div>
 
-<!-- FILTRES -->
 <form class="cd dash-filters" method="get">
-<div class="filter-group">
-<label>Cohorte</label>
-<select name="cohort"><option value="">Toutes</option>{% for c in cohortes %}<option {% if f.cohort == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
-</div>
-<div class="filter-group">
-<label>Domaine</label>
-<select name="domain"><option value="">Tous</option>{% for d in domaines %}<option {% if f.domain == d %}selected{% endif %}>{{ d }}</option>{% endfor %}</select>
-</div>
-<div class="filter-group">
-<label>Statut</label>
-<select name="status"><option value="">Tous</option>{% for v, l in statuts %}<option value="{{ v }}" {% if f.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
-</div>
-<div class="filter-group" style="align-self:end"><button>🔍 Filtrer</button></div>
+<div class="filter-group"><label for="f-cohort">Cohorte</label><select id="f-cohort" name="cohort"><option value="">Toutes</option>{% for c in cohortes %}<option {% if f.cohort == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+<div class="filter-group"><label for="f-domain">Domaine</label><select id="f-domain" name="domain"><option value="">Tous</option>{% for d in domaines %}<option {% if f.domain == d %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div>
+<div class="filter-group"><label for="f-status">Statut</label><select id="f-status" name="status"><option value="">Tous</option>{% for v, l in statuts %}<option value="{{ v }}" {% if f.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+<div style="display:flex;gap:8px"><button><svg class="i"><use href="#i-filter"/></svg>Filtrer</button>{% if f.cohort or f.domain or f.status %}<a class="bt b2" href="{% url 'dashboard' %}">Effacer</a>{% endif %}</div>
 </form>
 
-<!-- KPI PRINCIPAUX -->
 <div class="kpi-grid">
-<div class="kpi-card kpi-total">
-<div class="kpi-icon">📋</div>
-<div class="kpi-value">{{ s.total }}</div>
-<div class="kpi-label">Dossiers déposés</div>
-</div>
-<div class="kpi-card kpi-ok">
-<div class="kpi-icon">✅</div>
-<div class="kpi-value">{{ s.taux }}<span class="kpi-unit">%</span></div>
-<div class="kpi-label">Taux de sélection</div>
-<div class="kpi-detail">{{ s.acceptes }} acceptés / {{ s.refuses }} refusés</div>
-</div>
-<div class="kpi-card kpi-warn">
-<div class="kpi-icon">⚠️</div>
-<div class="kpi-value">{{ s.retards }}</div>
-<div class="kpi-label">Jalons en retard</div>
-<div class="kpi-detail">sur {{ s.jalons_total }} jalons au total</div>
-</div>
-<div class="kpi-card kpi-progress">
-<div class="kpi-icon">📈</div>
-<div class="kpi-value">{{ s.avancement }}<span class="kpi-unit">%</span></div>
-<div class="kpi-label">Avancement jalons</div>
-<div class="kpi-detail">{{ s.jalons_valides }} validés · {{ s.jalons_encours }} en cours · {{ s.jalons_afaire }} à faire</div>
-</div>
+<div class="kpi-card"><div class="kpi-tete"><span class="kpi-label">Dossiers déposés</span><span class="kpi-ico"><svg class="i"><use href="#i-folder"/></svg></span></div>
+<div class="kpi-value">{{ s.total }}</div><div class="kpi-detail">{{ s.soumis }} en attente · {{ s.a_completer }} à compléter</div></div>
+<div class="kpi-card kpi-ok"><div class="kpi-tete"><span class="kpi-label">Taux de sélection</span><span class="kpi-ico"><svg class="i"><use href="#i-check-circle"/></svg></span></div>
+<div class="kpi-value">{{ s.taux }}<span class="kpi-unit">%</span></div><div class="kpi-detail">{{ s.acceptes }} acceptés / {{ s.refuses }} refusés</div></div>
+<div class="kpi-card kpi-warn"><div class="kpi-tete"><span class="kpi-label">Jalons en retard</span><span class="kpi-ico"><svg class="i"><use href="#i-alert"/></svg></span></div>
+<div class="kpi-value">{{ s.retards }}</div><div class="kpi-detail">sur {{ s.jalons_total }} jalons au total</div></div>
+<div class="kpi-card kpi-progress"><div class="kpi-tete"><span class="kpi-label">Avancement des jalons</span><span class="kpi-ico"><svg class="i"><use href="#i-trending"/></svg></span></div>
+<div class="kpi-value">{{ s.avancement }}<span class="kpi-unit">%</span></div><div class="kpi-detail">{{ s.jalons_valides }} validés · {{ s.jalons_encours }} en cours · {{ s.jalons_afaire }} à faire</div></div>
 </div>
 
-<!-- KPI SECONDAIRES -->
 <div class="kpi-grid kpi-secondary">
-<div class="kpi-card-sm">
-<span class="kpi-sm-icon">📝</span>
-<div><div class="kpi-sm-value">{{ s.soumis }}</div><div class="kpi-sm-label">En attente</div></div>
-</div>
-<div class="kpi-card-sm">
-<span class="kpi-sm-icon">🔄</span>
-<div><div class="kpi-sm-value">{{ s.a_completer }}</div><div class="kpi-sm-label">À compléter</div></div>
-</div>
-<div class="kpi-card-sm">
-<span class="kpi-sm-icon">🤖</span>
-<div><div class="kpi-sm-value">{{ s.ia_count }}</div><div class="kpi-sm-label">Projets avec IA</div></div>
-</div>
-<div class="kpi-card-sm">
-<span class="kpi-sm-icon">🧑‍🏫</span>
-<div><div class="kpi-sm-value">{{ s.mentors_actifs }}</div><div class="kpi-sm-label">Mentors actifs</div></div>
-</div>
-<div class="kpi-card-sm">
-<span class="kpi-sm-icon">🗓️</span>
-<div><div class="kpi-sm-value">{{ s.suivis_dus }}</div><div class="kpi-sm-label">Suivis 3/6 mois dus</div></div>
-</div>
-<div class="kpi-card-sm">
-<span class="kpi-sm-icon">💼</span>
-<div><div class="kpi-sm-value">{{ s.emplois }}</div><div class="kpi-sm-label">Emplois créés ({{ s.suivis_faits }} suivis)</div></div>
-</div>
-</div>
-
-<!-- ALERTES -->
-<div class="rw">
-<div class="cd">
-<h2>⚠️ Jalons en retard</h2>
-{% for j in retards %}<p><a href="{% url 'projet' j.project_id %}">{{ j.project.title }}</a> · {{ j.title }}
-<span class="tg ko">échéance {{ j.due|date:"d/m/Y" }}</span></p>
-{% empty %}<p class="sm">Aucun jalon en retard.</p>{% endfor %}
-{% if s.retards > retards|length %}<p class="sm">{{ s.retards }} jalons en retard au total : les 10 plus anciens sont affichés.</p>{% endif %}
-</div>
-<div class="cd">
-<h2>🗓️ Suivis post-incubation à réaliser</h2>
-{% for p, m, d in suivis_dus %}<p><a href="{% url 'projet' p.pk %}">{{ p.title }}</a> · suivi à {{ m }} mois
-<span class="tg ko">depuis le {{ d|date:"d/m/Y" }}</span></p>
-{% empty %}<p class="sm">Aucun suivi en attente.</p>{% endfor %}
-</div>
-</div>
-
-<!-- GRAPHIQUES -->
-<div class="rw">
-<div class="cd chart-card">
-<h2>Répartition par statut</h2>
-<div class="chart-wrap"><canvas id="chartStatuts"></canvas></div>
-</div>
-<div class="cd chart-card">
-<h2>Répartition par genre</h2>
-<div class="chart-wrap"><canvas id="chartGenre"></canvas></div>
-</div>
+<div class="kpi-card-sm"><svg class="i"><use href="#i-users"/></svg><div><div class="kpi-sm-value">{{ s.mentors_actifs }}</div><div class="kpi-sm-label">Mentors actifs</div></div></div>
+<div class="kpi-card-sm"><svg class="i"><use href="#i-calendar"/></svg><div><div class="kpi-sm-value">{{ s.suivis_dus }}</div><div class="kpi-sm-label">Suivis 3/6 mois dus</div></div></div>
+<div class="kpi-card-sm"><svg class="i"><use href="#i-briefcase"/></svg><div><div class="kpi-sm-value">{{ s.emplois }}</div><div class="kpi-sm-label">Emplois créés ({{ s.suivis_faits }} suivis)</div></div></div>
+<div class="kpi-card-sm"><svg class="i"><use href="#i-sparkles"/></svg><div><div class="kpi-sm-value">{{ s.ia_count }}</div><div class="kpi-sm-label">Dossiers rédigés avec l'IA</div></div></div>
 </div>
 
 <div class="rw">
-<div class="cd chart-card chart-wide">
-<h2>Projets par domaine</h2>
-<div class="chart-wrap-wide"><canvas id="chartDomaines"></canvas></div>
-</div>
+<div class="cd"><h2><svg class="i"><use href="#i-alert"/></svg>Jalons en retard</h2>
+{% for j in retards %}<div class="alerte-ligne"><div><a href="{% url 'projet' j.project_id %}">{{ j.project.title }}</a><div class="sm">{{ j.title }}</div></div>
+<span class="tg ko">échéance {{ j.due|date:"d/m/Y" }}</span></div>
+{% empty %}<p class="vide">Aucun jalon en retard.</p>{% endfor %}
+{% if s.retards > retards|length %}<p class="sm" style="margin-top:8px">{{ s.retards }} jalons en retard au total : les 10 plus anciens sont affichés.</p>{% endif %}</div>
+<div class="cd"><h2><svg class="i"><use href="#i-calendar"/></svg>Suivis post-incubation à réaliser</h2>
+{% for p, m, d in suivis_dus %}<div class="alerte-ligne"><div><a href="{% url 'projet' p.pk %}">{{ p.title }}</a><div class="sm">suivi à {{ m }} mois</div></div>
+<span class="tg ko">depuis le {{ d|date:"d/m/Y" }}</span></div>
+{% empty %}<p class="vide">Aucun suivi en attente.</p>{% endfor %}</div>
 </div>
 
 <div class="rw">
-<div class="cd chart-card">
-<h2>Sélection par cohorte</h2>
-<div class="chart-wrap"><canvas id="chartCohortes"></canvas></div>
+<div class="cd"><h2>Répartition par statut</h2><div class="chart-wrap"><canvas id="chartStatuts" aria-label="Répartition des dossiers par statut"></canvas></div></div>
+<div class="cd"><h2>Avancement des jalons</h2><div class="chart-wrap"><canvas id="chartJalons" aria-label="Jalons par état"></canvas></div></div>
 </div>
-<div class="cd chart-card">
-<h2>Avancement des jalons</h2>
-<div class="chart-wrap"><canvas id="chartJalons"></canvas></div>
-</div>
-</div>
-
-<!-- TABLEAU STATUTS -->
-<div class="cd">
-<h2>Synthèse par statut</h2>
-<table>
-<tr><th>Statut</th><th>Nombre</th><th>Proportion</th><th>Barre</th></tr>
-{% for k, v, pct in s.st %}
-<tr>
-<td><span class="tg {% if k == 'Accepté' %}ok{% elif k == 'Refusé' %}ko{% endif %}">{{ k }}</span></td>
-<td><strong>{{ v }}</strong></td>
-<td>{{ pct }} %</td>
-<td style="width:50%"><div class="ln"><i style="width:{{ pct }}%"></i></div></td>
-</tr>
-{% endfor %}
-</table>
+<div class="cd"><h2>Projets par domaine</h2><div class="chart-wrap-wide"><canvas id="chartDomaines" aria-label="Projets et acceptés par domaine"></canvas></div></div>
+<div class="rw">
+<div class="cd"><h2>Sélection par cohorte</h2><div class="chart-wrap"><canvas id="chartCohortes" aria-label="Projets et acceptés par cohorte"></canvas></div></div>
+<div class="cd"><h2>Répartition par genre</h2><div class="chart-wrap"><canvas id="chartGenre" aria-label="Porteurs par genre"></canvas></div></div>
 </div>
 
-<!-- Chart.js -->
+<div class="cd"><h2>Synthèse par statut</h2>
+<div class="table-wrap"><table><thead><tr><th>Statut</th><th>Nombre</th><th>Proportion</th><th style="width:45%">Répartition</th></tr></thead><tbody>
+{% for k, v, pct in s.st %}<tr><td><span class="tg {% if k == 'Accepté' %}ok{% elif k == 'Refusé' %}ko{% elif k == 'À compléter' %}warn{% else %}info{% endif %}">{{ k }}</span></td>
+<td><strong>{{ v }}</strong></td><td>{{ pct }} %</td><td><div class="ln"><i style="width:{{ pct }}%"></i></div></td></tr>
+{% empty %}<tr><td colspan="4" class="vide">Aucun dossier pour ces filtres.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}
+{% block js %}
 {{ chart_data|json_script:"chart-data" }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
 const D = JSON.parse(document.getElementById("chart-data").textContent);
-const COLORS = ['#B07A4F','#4A2E1F','#C9A87C','#6B5545','#8B7355','#E3D3C0','#2B1A10'];
-const OK_COLORS = ['#1E6F3E','#D4EDDA'];
+const BRUN = '#4A2E1F', CARAMEL = '#B07A4F', SABLE = '#C9A87C', OK = '#1E6F3E', KO = '#A12A33', WARN = '#C98A1E', INFO = '#4E6E9E';
+const STATUT_COULEUR = {'Accepté': OK, 'Refusé': KO, 'À compléter': WARN, 'Soumis': INFO};
 Chart.defaults.font.family = "'Inter',system-ui,sans-serif";
-Chart.defaults.font.size = 13;
+Chart.defaults.font.size = 12.5;
+Chart.defaults.color = '#76604F';
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
-
-// Statuts - Doughnut
-new Chart(document.getElementById('chartStatuts'), {
-  type: 'doughnut',
-  data: {labels: D.statuts.labels, datasets: [{data: D.statuts.data, backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff'}]},
-  options: {responsive: true, maintainAspectRatio: false, cutout: '55%',
-    plugins: {legend: {position: 'bottom'}}}
-});
-
-// Genre - Doughnut
-new Chart(document.getElementById('chartGenre'), {
-  type: 'doughnut',
-  data: {labels: D.genre.labels, datasets: [{data: D.genre.data, backgroundColor: ['#B07A4F','#C9A87C','#E3D3C0'], borderWidth: 2, borderColor: '#fff'}]},
-  options: {responsive: true, maintainAspectRatio: false, cutout: '55%',
-    plugins: {legend: {position: 'bottom'}}}
-});
-
-// Domaines - Horizontal Bar
-new Chart(document.getElementById('chartDomaines'), {
-  type: 'bar',
-  data: {labels: D.domaines.labels,
-    datasets: [
-      {label: 'Total', data: D.domaines.data, backgroundColor: 'rgba(176,122,79,0.7)', borderColor: '#B07A4F', borderWidth: 1, borderRadius: 6},
-      {label: 'Acceptés', data: D.domaines.ok, backgroundColor: 'rgba(30,111,62,0.7)', borderColor: '#1E6F3E', borderWidth: 1, borderRadius: 6}
-    ]},
-  options: {responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-    scales: {x: {beginAtZero: true, grid: {color: 'rgba(0,0,0,0.05)'}}, y: {grid: {display: false}}},
-    plugins: {legend: {position: 'top'}}}
-});
-
-// Cohortes - Bar
-new Chart(document.getElementById('chartCohortes'), {
-  type: 'bar',
-  data: {labels: D.cohortes.labels,
-    datasets: [
-      {label: 'Total', data: D.cohortes.data, backgroundColor: 'rgba(176,122,79,0.7)', borderRadius: 8},
-      {label: 'Acceptés', data: D.cohortes.ok, backgroundColor: 'rgba(30,111,62,0.7)', borderRadius: 8}
-    ]},
-  options: {responsive: true, maintainAspectRatio: false,
-    scales: {y: {beginAtZero: true, grid: {color: 'rgba(0,0,0,0.05)'}}, x: {grid: {display: false}}},
-    plugins: {legend: {position: 'top'}}}
-});
-
-// Jalons - Doughnut
-new Chart(document.getElementById('chartJalons'), {
-  type: 'doughnut',
-  data: {labels: D.jalons.labels,
-    datasets: [{data: D.jalons.data,
-      backgroundColor: ['#1E6F3E','#B07A4F','#E3D3C0','#842029'], borderWidth: 2, borderColor: '#fff'}]},
-  options: {responsive: true, maintainAspectRatio: false, cutout: '55%',
-    plugins: {legend: {position: 'bottom'}}}
-});
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+const grille = {color: 'rgba(43,26,16,.06)'};
+const anneau = (id, labels, data, couleurs) => new Chart(document.getElementById(id), {type: 'doughnut',
+  data: {labels, datasets: [{data, backgroundColor: couleurs, borderWidth: 3, borderColor: '#fff', hoverOffset: 6}]},
+  options: {responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'bottom'}}}});
+const barres = (id, src, horizontal) => new Chart(document.getElementById(id), {type: 'bar',
+  data: {labels: src.labels, datasets: [
+    {label: 'Dossiers', data: src.data, backgroundColor: SABLE, borderRadius: 6, maxBarThickness: 28},
+    {label: 'Acceptés', data: src.ok, backgroundColor: OK, borderRadius: 6, maxBarThickness: 28}]},
+  options: {responsive: true, maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x',
+    scales: {x: {beginAtZero: true, grid: horizontal ? grille : {display: false}, ticks: {precision: 0}},
+             y: {beginAtZero: true, grid: horizontal ? {display: false} : grille, ticks: {precision: 0}}},
+    plugins: {legend: {position: 'top', align: 'end'}}}});
+anneau('chartStatuts', D.statuts.labels, D.statuts.data, D.statuts.labels.map(l => STATUT_COULEUR[l] || SABLE));
+anneau('chartJalons', D.jalons.labels, D.jalons.data, [OK, CARAMEL, '#E6D6C3', KO]);
+anneau('chartGenre', D.genre.labels, D.genre.data, [BRUN, CARAMEL, SABLE]);
+barres('chartDomaines', D.domaines, true);
+barres('chartCohortes', D.cohortes, false);
 </script>
 {% endblock %}

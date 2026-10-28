@@ -1,1 +1,3 @@
-{% for f in form %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% for e in f.errors %}<div class="sm err">{{ e }}</div>{% endfor %}{% endfor %}{% for e in form.non_field_errors %}<div class="fl">{{ e }}</div>{% endfor %}
+{% for f in form %}<div class="champ{% if f.errors %} champ-err{% endif %}"><label for="{{ f.id_for_label }}">{{ f.label }}{% if f.field.required %} <span aria-hidden="true" style="color:var(--brun-400)">*</span>{% endif %}</label>{{ f }}
+{% if f.help_text %}<div class="sm" style="margin-top:4px">{{ f.help_text|safe }}</div>{% endif %}{% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>{% endfor %}
+{% for e in form.non_field_errors %}<div class="fl error" style="margin-top:14px">{{ e }}</div>{% endfor %}

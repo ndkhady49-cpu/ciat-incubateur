@@ -1,5 +1,14 @@
-{% extends "layout.html" %}{% block c %}
-<h1>{% if p %}Modifier mon dossier{% else %}Déposer mon dossier{% endif %}</h1>
+{% extends "layout.html" %}{% block t %}{% if p %}Modifier mon dossier{% else %}Déposer un dossier{% endif %} — CIAT Incubateur{% endblock %}{% block c %}
+<div class="page-head"><div><a class="retour" href="{% if p %}{% url 'projet' p.pk %}{% else %}{% url 'projets' %}{% endif %}"><svg class="i i-sm"><use href="#i-chevron-left"/></svg>{% if p %}{{ p.title }}{% else %}Mes dossiers{% endif %}</a>
+<p class="eyebrow">Espace porteur</p><h1>{% if p %}Modifier mon dossier{% else %}Déposer mon dossier{% endif %}</h1>
+<p class="lead">Un dossier complet (titre, domaine, problème, solution et pièce jointe) est évalué plus rapidement par le comité.</p></div></div>
+<div class="grille-2">
 <form class="cd" method="post" enctype="multipart/form-data">{% csrf_token %}{% include "partials/champs.html" %}
-{% if p and p.file %}<p class="sm">Une pièce jointe est déjà enregistrée ; en choisir une nouvelle la remplacera.</p>{% endif %}
-<p style="margin-top:14px"><button>Enregistrer</button> <a class="bt b2" href="{% url 'projets' %}">Annuler</a> <a class="bt b2" href="{% url 'ia' %}">Aide de l'IA</a></p></form>{% endblock %}
+{% if p and p.file %}<p class="sm" style="margin-top:8px">Une pièce jointe est déjà enregistrée ; en choisir une nouvelle la remplacera.</p>{% endif %}
+<div class="form-actions"><button><svg class="i"><use href="#i-check"/></svg>Enregistrer</button><a class="bt b2" href="{% url 'projets' %}">Annuler</a></div></form>
+<div class="pile"><div class="cd"><h2><svg class="i"><use href="#i-sparkles"/></svg>Besoin d'aide pour rédiger ?</h2>
+<p class="sm">L'assistant IA reformule votre problème ou votre solution, prépare un pitch ou une analyse SWOT. Vous gardez la main sur le texte final.</p>
+<p style="margin-top:14px"><a class="bt b2" href="{% url 'ia' %}">Ouvrir l'assistant IA</a></p></div>
+<div class="cd"><h2><svg class="i"><use href="#i-paperclip"/></svg>Pièces jointes</h2>
+<p class="sm">Formats acceptés : PDF, PNG, JPG, DOCX — 5 Mo maximum. D'autres documents peuvent être ajoutés ensuite depuis la fiche du projet.</p></div></div>
+</div>{% endblock %}

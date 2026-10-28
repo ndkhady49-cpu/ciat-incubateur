@@ -1,15 +1,19 @@
 {% extends "layout.html" %}{% block t %}Calendrier — CIAT Incubateur{% endblock %}{% block c %}
-<div class="rw" style="align-items:center"><h1>📅 Calendrier</h1><div class="actions">
-<a class="bt b2" href="?m={{ prec }}">←</a><b class="cal-mois">{{ titre }}</b><a class="bt b2" href="?m={{ suiv }}">→</a>
+<div class="page-head"><div><p class="eyebrow">Échéances</p><h1>Calendrier</h1>
+<p class="lead">Jalons et suivis à 3 et 6 mois des projets que vous suivez.</p></div>
+<div class="page-actions cal-nav">
+<a class="bt b2" href="?m={{ prec }}" aria-label="Mois précédent"><svg class="i"><use href="#i-chevron-left"/></svg></a>
+<b class="cal-mois">{{ titre }}</b>
+<a class="bt b2" href="?m={{ suiv }}" aria-label="Mois suivant"><svg class="i"><use href="#i-chevron-right"/></svg></a>
 <a class="bt b2" href="{% url 'calendrier' %}">Aujourd'hui</a></div></div>
-<p class="sm">Échéances des jalons et des suivis à 3 et 6 mois.
-<span class="tg ok">validé / fait</span> <span class="tg ko">en retard</span> <span class="tg">à venir</span> <span class="tg suivi">suivi post-incubation</span></p>
-<div class="cd cal"><table><tr>{% for j in jours %}<th>{{ j }}</th>{% endfor %}</tr>
+<div class="legende"><span class="tg ok">Validé / fait</span><span class="tg ko">En retard</span><span class="tg">À venir</span><span class="tg suivi">Suivi post-incubation</span></div>
+<div class="cd cal"><table><thead><tr>{% for j in jours %}<th>{{ j }}</th>{% endfor %}</tr></thead><tbody>
 {% for sem in semaines %}<tr>{% for c in sem %}<td class="{% if not c.dans_mois %}hors{% endif %}{% if c.date == today %} auj{% endif %}">
 <div class="cal-num">{{ c.date.day }}</div>
-{% for e in c.evts %}<a class="tg {{ e.classe }}" href="{% url 'projet' e.projet.pk %}" title="{{ e.projet.title }}">{{ e.titre }}</a>{% endfor %}</td>{% endfor %}</tr>{% endfor %}
-</table></div>
-<div class="cd cal-liste"><h2>{{ titre }}</h2>
-{% for d, evts in liste %}<p><b>{{ d|date:"D d/m" }}</b><br>{% for e in evts %}<a class="tg {{ e.classe }}" href="{% url 'projet' e.projet.pk %}">{{ e.titre }}</a> <span class="sm">{{ e.projet.title }}</span><br>{% endfor %}</p>
-{% empty %}<p class="sm">Aucune échéance ce mois-ci.</p>{% endfor %}</div>
+{% for e in c.evts %}<a class="tg {{ e.classe }}" href="{% url 'projet' e.projet.pk %}" title="{{ e.titre }} — {{ e.projet.title }}">{{ e.titre }}</a>{% endfor %}</td>{% endfor %}</tr>{% endfor %}
+</tbody></table></div>
+<div class="cd cal-liste"><h2><svg class="i"><use href="#i-calendar"/></svg>{{ titre }}</h2>
+{% for d, evts in liste %}<div class="cal-jour"><b>{{ d|date:"l d F"|capfirst }}</b>
+{% for e in evts %}<div style="margin-top:6px"><a class="tg {{ e.classe }}" href="{% url 'projet' e.projet.pk %}">{{ e.titre }}</a> <span class="sm">{{ e.projet.title }}</span></div>{% endfor %}</div>
+{% empty %}<p class="vide">Aucune échéance ce mois-ci.</p>{% endfor %}</div>
 {% endblock %}

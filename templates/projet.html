@@ -1,79 +1,109 @@
 {% extends "layout.html" %}{% block t %}{{ p.title }} — CIAT Incubateur{% endblock %}{% block c %}
-<div class="rw" style="align-items:center"><h1>{{ p.title }}</h1><div class="actions">
-<span class="tg {% if p.status == 'accepte' %}ok{% elif p.status == 'refuse' %}ko{% endif %}">{{ p.get_status_display }}</span>
-<a class="bt b2" href="{% url 'fiche_pdf' p.pk %}">Fiche PDF</a>
-{% if peut_suivre %}<a class="bt b2" href="{% url 'compte_rendu' p.pk %}">Compte rendu</a>{% endif %}
-{% if user.role == 'porteur' and p.editable %}<a class="bt" href="{% url 'projet_modifier' p.pk %}">Modifier</a>{% endif %}</div></div>
+<div class="page-head"><div>
+<a class="retour" href="{% url 'projets' %}"><svg class="i i-sm"><use href="#i-chevron-left"/></svg>{% if user.role == 'porteur' %}Mes dossiers{% else %}Projets{% endif %}</a>
+<p class="eyebrow">{{ p.domain }} · cohorte {{ p.cohort }}</p>
+<h1>{{ p.title }} <span class="tg st-{{ p.status }}" style="vertical-align:middle">{{ p.get_status_display }}</span></h1>
+<div class="meta" style="margin-top:8px"><span><svg class="i i-sm"><use href="#i-user"/></svg>{{ p.owner.nom }}</span>
+<span><svg class="i i-sm"><use href="#i-users"/></svg>Mentor : {{ p.mentor.nom|default:"non affecté" }}</span>
+<span><svg class="i i-sm"><use href="#i-calendar"/></svg>Déposé le {{ p.created|date:"d/m/Y" }}</span></div></div>
+<div class="page-actions">
+<a class="bt b2" href="{% url 'fiche_pdf' p.pk %}"><svg class="i"><use href="#i-pdf"/></svg>Fiche PDF</a>
+{% if peut_suivre %}<a class="bt b2" href="{% url 'compte_rendu' p.pk %}"><svg class="i"><use href="#i-sparkles"/></svg>Compte rendu</a>{% endif %}
+{% if user.role == 'porteur' and p.editable %}<a class="bt" href="{% url 'projet_modifier' p.pk %}"><svg class="i"><use href="#i-edit"/></svg>Modifier</a>{% endif %}</div></div>
 
-<div class="rw"><div class="cd"><h2>Dossier</h2><p class="sm">{{ p.owner.nom }} · {{ p.domain }} · cohorte {{ p.cohort }}{% if p.mentor %} · mentor : {{ p.mentor.nom }}{% endif %}</p>
-{% if user.role == 'coordo' %}<details><summary>Changer de cohorte</summary><form class="inl" method="post" action="{% url 'cohorte' p.pk %}">{% csrf_token %}
-<div style="flex:1"><label>Cohorte (ex. 2026-B)</label><input name="cohort" value="{{ p.cohort }}" maxlength="20" pattern="[0-9]{4}-[A-Z0-9]{1,3}" required></div><button class="b2">OK</button></form></details>{% endif %}
-<label>Problème</label><p>{{ p.problem|default:"-" }}</p><label>Solution</label><p>{{ p.solution|default:"-" }}</p>
-{% if p.ia_used %}<p class="sm">Ce dossier contient du texte rédigé avec l'aide d'une IA, relu et validé par le porteur.</p>{% endif %}
-<label>Documents</label>
-<ul class="docs">{% if p.file %}<li>📎 <a href="{% url 'fichier' p.pk %}">Pièce jointe du dépôt</a></li>{% endif %}
-{% for d in documents %}<li>📎 <a href="{% url 'document' d.pk %}">{{ d.titre }}</a> <span class="sm">· {{ d.auteur.nom }}, {{ d.created|date:"d/m/Y" }}</span></li>
+<div class="cd"><div class="etapes">
+<div class="etape fait"><span class="pastille"><svg class="i i-sm"><use href="#i-check"/></svg></span>Dépôt</div>
+<div class="etape {% if evals %}fait{% else %}courant{% endif %}"><span class="pastille">{% if evals %}<svg class="i i-sm"><use href="#i-check"/></svg>{% else %}2{% endif %}</span>Évaluation</div>
+<div class="etape {% if p.status == 'accepte' %}fait{% elif p.status == 'refuse' %}stop{% elif p.status == 'a_completer' %}courant{% endif %}"><span class="pastille">{% if p.status == 'accepte' %}<svg class="i i-sm"><use href="#i-check"/></svg>{% elif p.status == 'refuse' %}<svg class="i i-sm"><use href="#i-x"/></svg>{% else %}3{% endif %}</span>{% if p.status == 'refuse' %}Refusé{% elif p.status == 'a_completer' %}À compléter{% else %}Décision{% endif %}</div>
+<div class="etape {% if p.mentor %}fait{% elif p.status == 'accepte' %}courant{% endif %}"><span class="pastille">{% if p.mentor %}<svg class="i i-sm"><use href="#i-check"/></svg>{% else %}4{% endif %}</span>Mentorat et jalons</div>
+<div class="etape {% if suivis|length >= 2 %}fait{% elif p.fin_incubation %}courant{% endif %}"><span class="pastille">{% if suivis|length >= 2 %}<svg class="i i-sm"><use href="#i-check"/></svg>{% else %}5{% endif %}</span>Suivi 3 et 6 mois</div>
+</div></div>
+
+<div class="grille-2">
+<div class="pile">
+<div class="cd"><h2><svg class="i"><use href="#i-file"/></svg>Dossier</h2>
+<dl><div class="champ-lu"><dt>Problème identifié</dt><dd class="pre">{{ p.problem|default:"Non renseigné." }}</dd></div>
+<div class="champ-lu"><dt>Solution proposée</dt><dd class="pre">{{ p.solution|default:"Non renseignée." }}</dd></div></dl>
+{% if p.ia_used %}<p class="ia-note" style="margin-top:14px"><svg class="i"><use href="#i-sparkles"/></svg>Ce dossier contient du texte rédigé avec l'aide d'une IA, relu et validé par le porteur.</p>{% endif %}
+<div class="champ-lu"><dt>Documents</dt></div>
+<ul class="docs">{% if p.file %}<li><svg class="i"><use href="#i-paperclip"/></svg><a href="{% url 'fichier' p.pk %}">Pièce jointe du dépôt</a></li>{% endif %}
+{% for d in documents %}<li><svg class="i"><use href="#i-paperclip"/></svg><a href="{% url 'document' d.pk %}">{{ d.titre }}</a><span class="sm">{{ d.auteur.nom }} · {{ d.created|date:"d/m/Y" }}</span></li>
 {% empty %}{% if not p.file %}<li class="sm">Aucun document.</li>{% endif %}{% endfor %}</ul>
-{% if peut_deposer %}<details><summary>+ Ajouter un document</summary>
+{% if peut_deposer %}<details><summary>Ajouter un document</summary>
 <form method="post" enctype="multipart/form-data" action="{% url 'document_ajout' p.pk %}">{% csrf_token %}
-{% include "partials/champs.html" with form=doc_form %}<p style="margin-top:12px"><button>Ajouter</button></p></form></details>{% endif %}</div>
-<div class="cd"><h2>Complétude</h2><div class="ln"><i style="width:{{ pc }}%"></i></div><p>{{ pc }} %</p>
-{% for m in manque %}<span class="tg ko">{{ m }} manquant</span> {% endfor %}</div></div>
+{% include "partials/champs.html" with form=doc_form %}<div class="form-actions"><button><svg class="i"><use href="#i-upload"/></svg>Ajouter</button></div></form></details>{% endif %}
+{% if user.role == 'coordo' %}<details><summary>Changer de cohorte</summary><form class="inl" method="post" action="{% url 'cohorte' p.pk %}">{% csrf_token %}
+<div style="flex:1"><label>Cohorte (ex. 2026-B)</label><input name="cohort" value="{{ p.cohort }}" maxlength="20" pattern="[0-9]{4}-[A-Z0-9]{1,3}" required></div><button class="b2">Enregistrer</button></form></details>{% endif %}</div>
 
-<div class="rw"><div class="cd"><h2>Évaluations</h2>
-{% for e in evals %}<p><b>{{ e.total }}/20</b> · <span class="tg">{{ e.get_decision_display }}</span> · {{ e.evaluator.nom }}<br>
-<span class="sm">Innovation {{ e.innovation }} · Faisabilité {{ e.faisabilite }} · Impact {{ e.impact }} · Équipe {{ e.equipe }}</span><br>
-<span class="sm">{{ e.motivation }}</span></p>{% empty %}<p class="sm">Pas encore évalué.</p>{% endfor %}
-{% if user.role == 'comite' or user.role == 'coordo' %}<details {% if not evals %}open{% endif %}><summary>Nouvelle évaluation</summary>
-<form method="post" action="{% url 'evaluer' p.pk %}">{% csrf_token %}
-{% include "partials/champs.html" with form=eval_form %}<p style="margin-top:14px"><button>Enregistrer la décision</button></p></form></details>{% endif %}</div>
-<div class="cd"><h2>Accompagnement</h2>
-{% if user.role == 'coordo' and p.status == 'accepte' %}<form class="inl" method="post" action="{% url 'affecter' p.pk %}">{% csrf_token %}
-<div style="flex:1"><label>Mentor</label><select name="mentor_id">{% for m in mentors %}<option value="{{ m.pk }}" {% if m.pk == p.mentor_id %}selected{% endif %}>{{ m.nom }}</option>{% endfor %}</select></div><button>Affecter</button></form>
-{% else %}<p><b>Mentor :</b> {{ p.mentor.nom|default:"non affecté" }}</p>{% endif %}
-<label>Objectifs</label><p style="white-space:pre-line">{{ p.objectifs|default:"Non définis." }}</p>
-<p class="sm">Fin d'incubation : {{ p.fin_incubation|date:"d/m/Y"|default:"non fixée" }}</p>
-{% if peut_suivre %}<details><summary>Modifier les objectifs</summary>
-<form method="post" action="{% url 'accompagnement' p.pk %}">{% csrf_token %}{% include "partials/champs.html" with form=acc_form %}
-<p style="margin-top:12px"><button>Enregistrer</button></p></form></details>{% endif %}</div></div>
-
-<div class="cd"><h2>Jalons, preuves et commentaires</h2>
-{% for j in jalons %}<div class="jalon">
-<div class="jalon-tete"><b>{{ j.title }}</b> <span class="sm">échéance {{ j.due|date:"d/m/Y" }}</span>
-<span class="tg {% if j.status == 'valide' %}ok{% elif j.en_retard %}ko{% endif %}">{% if j.en_retard %}⚠️ en retard{% else %}{{ j.get_status_display }}{% endif %}</span>
+<div class="cd"><h2><svg class="i"><use href="#i-flag"/></svg>Jalons, preuves et commentaires</h2>
+{% for j in jalons %}<div class="jalon {% if j.en_retard %}retard{% elif j.status == 'valide' %}fait{% endif %}">
+<div class="jalon-tete"><b>{{ j.title }}</b>
+<span class="tg {% if j.en_retard %}ko{% else %}st-{{ j.status }}{% endif %}">{% if j.en_retard %}En retard{% else %}{{ j.get_status_display }}{% endif %}</span>
+<span class="sm"><svg class="i i-sm"><use href="#i-clock"/></svg> {{ j.due|date:"d/m/Y" }}</span>
 {% if user.role == 'coordo' or user.role == 'mentor' %}<form class="inl" method="post" action="{% url 'jalon_maj' j.pk %}">{% csrf_token %}
-<select name="status" style="width:auto">{% for v, l in jalon_statuts %}<option value="{{ v }}" {% if v == j.status %}selected{% endif %}>{{ l }}</option>{% endfor %}</select><button class="b2">OK</button></form>{% endif %}</div>
-{% if j.preuves.all %}<ul class="docs">{% for d in j.preuves.all %}<li>✅ <a href="{% url 'document' d.pk %}">{{ d.titre }}</a> <span class="sm">· {{ d.auteur.nom }}, {{ d.created|date:"d/m/Y" }}</span></li>{% endfor %}</ul>{% endif %}
-{% for c in j.commentaires.all %}<div class="com"><b>{{ c.auteur.nom }}</b> <span class="sm">{{ c.created|date:"d/m/Y H:i" }}</span><br>{{ c.texte|linebreaksbr }}</div>{% endfor %}
+<select name="status" aria-label="Statut du jalon">{% for v, l in jalon_statuts %}<option value="{{ v }}" {% if v == j.status %}selected{% endif %}>{{ l }}</option>{% endfor %}</select><button class="b2 bt-sm">OK</button></form>{% endif %}</div>
+{% if j.preuves.all %}<ul class="docs">{% for d in j.preuves.all %}<li><svg class="i"><use href="#i-check-circle"/></svg><a href="{% url 'document' d.pk %}">{{ d.titre }}</a><span class="sm">{{ d.auteur.nom }} · {{ d.created|date:"d/m/Y" }}</span></li>{% endfor %}</ul>{% endif %}
+{% for c in j.commentaires.all %}<div class="com"><div class="com-tete"><span class="avatar">{{ c.auteur.nom|first|upper }}</span><b>{{ c.auteur.nom }}</b><span class="sm">{{ c.created|date:"d/m/Y H:i" }}</span></div>{{ c.texte|linebreaksbr }}</div>{% endfor %}
 <details><summary>Commenter{% if peut_deposer %} ou ajouter une preuve{% endif %}</summary>
 <form class="inl" method="post" action="{% url 'commentaire_ajout' p.pk %}">{% csrf_token %}<input type="hidden" name="jalon_id" value="{{ j.pk }}">
 <div style="flex:1"><label>Commentaire</label><input name="texte" maxlength="1000" required></div><button class="b2">Envoyer</button></form>
 {% if peut_deposer %}<form class="inl" method="post" enctype="multipart/form-data" action="{% url 'document_ajout' p.pk %}">{% csrf_token %}<input type="hidden" name="jalon_id" value="{{ j.pk }}">
 <div style="flex:1"><label>Preuve (intitulé)</label><input name="titre" maxlength="150" required></div>
-<div style="flex:1"><label>Fichier (5 Mo max)</label><input type="file" name="fichier" accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx" required></div><button class="b2">Déposer</button></form>{% endif %}
+<div style="flex:1"><label>Fichier (5 Mo max)</label><input type="file" name="fichier" accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx" required></div><button class="b2"><svg class="i"><use href="#i-upload"/></svg>Déposer</button></form>{% endif %}
 </details></div>
-{% empty %}<p class="sm">Aucun jalon défini.</p>{% endfor %}
-{% if user.role == 'coordo' or user.role == 'mentor' %}<form class="inl" method="post" action="{% url 'jalon_ajout' p.pk %}">{% csrf_token %}
-<div style="flex:1"><label>Nouveau jalon</label><input name="title" required></div><div><label>Échéance</label><input type="date" name="due" required></div><button>Ajouter</button></form>{% endif %}</div>
+{% empty %}<p class="vide">Aucun jalon défini.</p>{% endfor %}
+{% if user.role == 'coordo' or user.role == 'mentor' %}<form class="inl" method="post" action="{% url 'jalon_ajout' p.pk %}" style="margin-top:6px">{% csrf_token %}
+<div style="flex:1"><label>Nouveau jalon</label><input name="title" required placeholder="Ex. Prototype v1"></div><div><label>Échéance</label><input type="date" name="due" required></div><button><svg class="i"><use href="#i-plus"/></svg>Ajouter</button></form>{% endif %}</div>
 
-<div class="rw"><div class="cd"><h2>Suivi à 3 et 6 mois</h2>
-{% if echeances %}<p class="sm">{% for m, d, fait in echeances %}{{ m }} mois : {{ d|date:"d/m/Y" }} {% if fait %}<span class="tg ok">fait</span>{% elif d < today %}<span class="tg ko">à faire</span>{% else %}<span class="tg">prévu</span>{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
-{% else %}<p class="sm">Les échéances apparaissent une fois la date de fin d'incubation fixée.</p>{% endif %}
-{% for s in suivis %}<p><b>{{ s.get_periode_display }}</b> · <span class="tg">{{ s.get_situation_display }}</span><br>
-<span class="sm">{{ s.emplois }} emploi(s){% if s.chiffre_affaires is not None %} · CA {{ s.chiffre_affaires }} FCFA{% endif %} · {{ s.auteur.nom }}, {{ s.created|date:"d/m/Y" }}</span>
-{% if s.observations %}<br><span class="sm">{{ s.observations }}</span>{% endif %}</p>{% endfor %}
-{% if peut_suivre %}<details><summary>+ Saisir un suivi</summary>
+<div class="cd"><h2><svg class="i"><use href="#i-message"/></svg>Échanges</h2>
+{% for c in commentaires %}<div class="com"><div class="com-tete"><span class="avatar">{{ c.auteur.nom|first|upper }}</span><b>{{ c.auteur.nom }}</b><span class="sm">{{ c.created|date:"d/m/Y H:i" }}</span></div>{{ c.texte|linebreaksbr }}</div>
+{% empty %}<p class="vide">Aucun échange pour le moment.</p>{% endfor %}
+<form method="post" action="{% url 'commentaire_ajout' p.pk %}" style="margin-top:8px">{% csrf_token %}
+<label for="msg">Message</label><textarea id="msg" name="texte" rows="2" maxlength="1000" required placeholder="Écrire au porteur, au mentor ou à la coordination…"></textarea>
+<div class="form-actions" style="margin-top:10px"><button>Envoyer</button></div></form></div>
+</div>
+
+<div class="pile">
+<div class="cd"><h2><svg class="i"><use href="#i-check-circle"/></svg>Complétude</h2>
+<div style="display:flex;align-items:baseline;gap:8px"><span class="big">{{ pc }} %</span><span class="sm">du dossier</span></div>
+<div class="ln" style="margin:10px 0 12px"><i style="width:{{ pc }}%"></i></div>
+{% for m in manque %}<span class="tg ko">À fournir : {{ m|lower }}</span> {% empty %}<span class="tg ok">Dossier complet</span>{% endfor %}</div>
+
+<div class="cd"><h2><svg class="i"><use href="#i-users"/></svg>Accompagnement</h2>
+{% if user.role == 'coordo' and p.status == 'accepte' %}<form class="inl" method="post" action="{% url 'affecter' p.pk %}">{% csrf_token %}
+<div style="flex:1"><label>Mentor</label><select name="mentor_id">{% for m in mentors %}<option value="{{ m.pk }}" {% if m.pk == p.mentor_id %}selected{% endif %}>{{ m.nom }}</option>{% endfor %}</select></div><button>Affecter</button></form>
+{% else %}<p><b>Mentor :</b> {{ p.mentor.nom|default:"non affecté" }}</p>{% endif %}
+<div class="champ-lu"><dt>Objectifs</dt><dd class="pre">{{ p.objectifs|default:"Non définis." }}</dd></div>
+<p class="sm" style="margin-top:10px">Fin d'incubation : {{ p.fin_incubation|date:"d/m/Y"|default:"non fixée" }}</p>
+{% if peut_suivre %}<details><summary>Modifier les objectifs</summary>
+<form method="post" action="{% url 'accompagnement' p.pk %}">{% csrf_token %}{% include "partials/champs.html" with form=acc_form %}
+<div class="form-actions"><button>Enregistrer</button></div></form></details>{% endif %}</div>
+
+<div class="cd"><h2><svg class="i"><use href="#i-target"/></svg>Évaluations</h2>
+{% for e in evals %}<div class="eval"><div class="eval-tete"><span class="note">{{ e.total }}<small>/20</small></span><span class="tg st-{{ e.decision }}">{{ e.get_decision_display }}</span></div>
+<div class="criteres"><div class="critere"><b>{{ e.innovation }}</b>Innovation</div><div class="critere"><b>{{ e.faisabilite }}</b>Faisabilité</div>
+<div class="critere"><b>{{ e.impact }}</b>Impact</div><div class="critere"><b>{{ e.equipe }}</b>Équipe</div></div>
+<p style="font-size:14px">{{ e.motivation }}</p><p class="sm" style="margin-top:4px">{{ e.evaluator.nom }} · {{ e.created|date:"d/m/Y" }}</p></div>
+{% empty %}<p class="vide">Pas encore évalué.</p>{% endfor %}
+{% if user.role == 'comite' or user.role == 'coordo' %}<details {% if not evals %}open{% endif %}><summary>Nouvelle évaluation</summary>
+<form method="post" action="{% url 'evaluer' p.pk %}">{% csrf_token %}
+{% include "partials/champs.html" with form=eval_form %}<div class="form-actions"><button>Enregistrer la décision</button></div></form></details>{% endif %}</div>
+
+<div class="cd"><h2><svg class="i"><use href="#i-trending"/></svg>Suivi à 3 et 6 mois</h2>
+{% if echeances %}<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">{% for m, d, fait in echeances %}<span class="tg {% if fait %}ok{% elif d < today %}ko{% else %}info{% endif %}">{{ m }} mois · {{ d|date:"d/m/Y" }}{% if fait %} · fait{% elif d < today %} · à faire{% endif %}</span>{% endfor %}</div>
+{% else %}<p class="vide">Les échéances apparaissent une fois la date de fin d'incubation fixée.</p>{% endif %}
+{% for s in suivis %}<div class="eval"><div class="eval-tete"><b>{{ s.get_periode_display }}</b><span class="tg">{{ s.get_situation_display }}</span></div>
+<p class="sm" style="margin-top:6px">{{ s.emplois }} emploi(s){% if s.chiffre_affaires is not None %} · CA {{ s.chiffre_affaires }} FCFA{% endif %} · {{ s.auteur.nom }}, {{ s.created|date:"d/m/Y" }}</p>
+{% if s.observations %}<p style="font-size:14px;margin-top:4px">{{ s.observations }}</p>{% endif %}</div>{% endfor %}
+{% if peut_suivre %}<details><summary>Saisir un suivi</summary>
 <form method="post" action="{% url 'suivi_ajout' p.pk %}">{% csrf_token %}{% include "partials/champs.html" with form=suivi_form %}
-<p style="margin-top:12px"><button>Enregistrer</button></p></form></details>{% endif %}</div>
-<div class="cd"><h2>Comptes rendus</h2>
-{% for cr in comptes_rendus %}<p>📄 <a href="{% url 'compte_rendu_pdf' cr.pk %}">Compte rendu du {{ cr.created|date:"d/m/Y" }}</a>
-<span class="sm">· {{ cr.auteur.nom }}{% if cr.ia_used %} · rédigé avec l'aide de l'IA{% endif %}</span></p>
-{% empty %}<p class="sm">Aucun compte rendu.</p>{% endfor %}
-{% if peut_suivre %}<p><a class="bt b2" href="{% url 'compte_rendu' p.pk %}">Rédiger un compte rendu</a></p>{% endif %}</div></div>
+<div class="form-actions"><button>Enregistrer</button></div></form></details>{% endif %}</div>
 
-<div class="cd"><h2>Échanges</h2>
-{% for c in commentaires %}<div class="com"><b>{{ c.auteur.nom }}</b> <span class="sm">{{ c.created|date:"d/m/Y H:i" }}</span><br>{{ c.texte|linebreaksbr }}</div>
-{% empty %}<p class="sm">Aucun échange pour le moment.</p>{% endfor %}
-<form class="inl" method="post" action="{% url 'commentaire_ajout' p.pk %}">{% csrf_token %}
-<div style="flex:1"><label>Message</label><textarea name="texte" rows="2" maxlength="1000" required></textarea></div><button>Envoyer</button></form></div>
+<div class="cd"><h2><svg class="i"><use href="#i-file"/></svg>Comptes rendus</h2>
+{% if comptes_rendus %}<ul class="docs">{% for cr in comptes_rendus %}<li><svg class="i"><use href="#i-pdf"/></svg><a href="{% url 'compte_rendu_pdf' cr.pk %}">Compte rendu du {{ cr.created|date:"d/m/Y" }}</a>
+<span class="sm">{{ cr.auteur.nom }}{% if cr.ia_used %} · avec l'aide de l'IA{% endif %}</span></li>{% endfor %}</ul>
+{% else %}<p class="vide">Aucun compte rendu.</p>{% endif %}
+{% if peut_suivre %}<p style="margin-top:10px"><a class="bt b2" href="{% url 'compte_rendu' p.pk %}"><svg class="i"><use href="#i-sparkles"/></svg>Rédiger un compte rendu</a></p>{% endif %}</div>
+</div>
+</div>
 {% endblock %}

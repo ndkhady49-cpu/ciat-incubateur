@@ -1,9 +1,20 @@
-{% extends "layout.html" %}{% block c %}<h1>Assistant de rédaction</h1>
-<p class="sm">L'IA propose, vous décidez : aucun texte n'est enregistré sans votre validation. Ne saisissez pas de données personnelles sensibles.</p>
-<div class="rw"><form class="cd" method="post">{% csrf_token %}<label>Mon texte</label><textarea name="texte" rows="7" required>{{ texte }}</textarea>
-<label>Que faire ?</label><select name="mode">{% for k in modes %}<option value="{{ k }}" {% if k == mode %}selected{% endif %}>{{ k|capfirst }}</option>{% endfor %}</select><p><button style="margin-top:12px">Générer une suggestion</button></p></form>
-{% if sug %}<form class="cd" method="post" action="{% url 'ia_accepter' %}">{% csrf_token %}<label>Suggestion ({% if src == 'IA' %}générée par IA{% else %}mode démonstration, aucune clé API configurée{% endif %}) - modifiable</label>
-<textarea name="texte" rows="7">{{ sug }}</textarea>
-<label>Enregistrer dans mon projet</label><select name="project_id">{% for m in mes %}<option value="{{ m.pk }}">{{ m.title }}</option>{% endfor %}</select>
-<label>Champ</label><select name="champ"><option value="problem">Problème</option><option value="solution">Solution</option></select>
-<p><button style="margin-top:12px" {% if not mes %}disabled{% endif %}>Valider et enregistrer</button></p></form>{% endif %}</div>{% endblock %}
+{% extends "layout.html" %}{% block t %}Assistant IA — CIAT Incubateur{% endblock %}{% block c %}
+<div class="page-head"><div><p class="eyebrow">Aide à la rédaction</p><h1>Assistant IA</h1>
+<p class="lead">Collez un brouillon : l'assistant propose une version, vous la corrigez puis l'enregistrez dans votre dossier.</p></div></div>
+<div class="ia-note"><svg class="i"><use href="#i-lock"/></svg><div>L'IA propose, vous décidez : aucun texte n'est enregistré sans votre validation. Ne saisissez pas de données personnelles sensibles.</div></div>
+<div class="rw">
+<form class="cd" method="post">{% csrf_token %}<h2><svg class="i"><use href="#i-edit"/></svg>1. Votre texte</h2>
+<label for="texte">Brouillon</label><textarea id="texte" name="texte" rows="8" required placeholder="Ex. : Les agriculteurs de la zone perdent une partie de leur récolte faute d'irrigation adaptée…">{{ texte }}</textarea>
+<label>Que voulez-vous obtenir ?</label>
+<div class="modes">{% for k in modes %}<label><input type="radio" name="mode" value="{{ k }}" {% if k == mode %}checked{% endif %}><span>{% if k == 'reformuler' %}Reformuler{% elif k == 'pitch' %}Pitch{% elif k == 'swot' %}Analyse SWOT{% else %}{{ k|capfirst }}{% endif %}</span></label>{% endfor %}</div>
+<div class="form-actions"><button><svg class="i"><use href="#i-sparkles"/></svg>Générer une suggestion</button></div></form>
+{% if sug %}<form class="cd" method="post" action="{% url 'ia_accepter' %}">{% csrf_token %}<h2><svg class="i"><use href="#i-sparkles"/></svg>2. Suggestion à relire</h2>
+<p class="sm">{% if src == 'IA' %}Générée par l'IA{% else %}Suggestion en mode démonstration, aucune clé API configurée{% endif %} — modifiable avant enregistrement.</p>
+<textarea name="texte" rows="8" aria-label="Suggestion">{{ sug }}</textarea>
+<label for="pid">Enregistrer dans mon dossier</label><select id="pid" name="project_id">{% for m in mes %}<option value="{{ m.pk }}">{{ m.title }}</option>{% endfor %}</select>
+<label for="champ">Champ</label><select id="champ" name="champ"><option value="problem">Problème</option><option value="solution">Solution</option></select>
+{% if not mes %}<p class="sm" style="margin-top:10px">Aucun dossier modifiable : déposez d'abord un dossier.</p>{% endif %}
+<div class="form-actions"><button {% if not mes %}disabled{% endif %}><svg class="i"><use href="#i-check"/></svg>Valider et enregistrer</button></div></form>
+{% else %}<div class="cd empty" style="display:flex;flex-direction:column;justify-content:center"><div class="empty-icon"><svg class="i"><use href="#i-sparkles"/></svg></div>
+<p>La suggestion apparaîtra ici.</p></div>{% endif %}
+</div>{% endblock %}
