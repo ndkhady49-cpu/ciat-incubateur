@@ -106,7 +106,7 @@ Huit entités (détail dans `docs/schema_base_de_donnees.md`) :
 - **Données personnelles** : l'interface invite à ne pas saisir de données sensibles ; seuls le nom du porteur et du mentor figurent dans le résumé envoyé.
 
 ### 5.3 Implémentation
-Appel à l'API Anthropic par `requests.post()` avec un délai maximal de 30 secondes. En cas d'erreur réseau ou de quota, l'application bascule automatiquement sur le mode démonstration. Le modèle est `claude-sonnet-4-6`, modifiable par la variable `ANTHROPIC_MODEL`.
+Appel à l'API Claude d'Anthropic par le SDK officiel Python (`anthropic`), modèle `claude-opus-5` (modifiable par la variable `ANTHROPIC_MODEL`), effort de raisonnement « low » pour répondre en quelques secondes. Délai maximal de 25 secondes et une seule nouvelle tentative. Si les filtres de sécurité refusent une demande, l'API la relance automatiquement sur le modèle de repli recommandé (`fallbacks: "default"`). En cas de clé invalide, de quota, de refus ou d'erreur réseau, l'application bascule sur le mode démonstration et l'incident est journalisé (sans jamais écrire la clé).
 
 ## 6. Données et indicateurs
 

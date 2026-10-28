@@ -43,7 +43,8 @@ Service `ciat-incubateur` > **Environment** :
 | `DEMO_PASSWORD` | mot de passe commun des comptes de démonstration, communiqué au jury seulement |
 | `DJANGO_DEBUG` | `0` |
 | `DJANGO_SECRET_KEY` | longue valeur aléatoire (bouton **Generate**) |
-| `ANTHROPIC_API_KEY` | facultatif : sans clé, l'IA fonctionne en mode démonstration |
+| `ANTHROPIC_API_KEY` | facultatif : clé de l'API Claude (voir § 6) ; sans clé, l'IA fonctionne en mode démonstration |
+| `ANTHROPIC_MODEL` | facultatif : `claude-opus-5` par défaut |
 
 Dans **Settings** > **Build Command**, mettre : `bash build.sh`. Commande de démarrage : `gunicorn config.wsgi`.
 
@@ -78,3 +79,21 @@ Vérifications après le déploiement :
   page met alors 30 à 60 secondes à s'afficher. Les données ne sont pas perdues.
 - **Limites anti-abus** : 5 échecs de connexion (par e-mail ou par adresse IP) bloquent la connexion 15 minutes ;
   20 appels à l'IA par utilisateur et par heure.
+
+## 6. Assistant IA : clé de l'API Claude
+
+1. Sur https://platform.claude.com, ouvrir **Settings > Billing** et ajouter des crédits (l'API est payante à l'usage).
+   Dans **Settings > Limits**, fixer une **limite de dépense mensuelle** pour ne jamais dépasser le budget prévu.
+2. **Settings > API Keys > Create Key** : nommer la clé `ciat-incubateur-render`, la copier (affichée une seule fois).
+3. Sur Render, **Environment** : ajouter `ANTHROPIC_API_KEY` avec cette valeur, puis enregistrer (redéploiement).
+4. Vérifier : en porteur, ouvrir **Assistant IA** et générer une suggestion. La mention « Générée par l'IA » confirme
+   l'appel réel ; « mode démonstration » signifie que la clé est absente ou refusée (le journal Render en indique la raison :
+   « clé ANTHROPIC_API_KEY refusée », « limite de débit atteinte », « API injoignable »).
+
+Coût indicatif avec `claude-opus-5` (5 $ par million de jetons en entrée, 25 $ en sortie) : une suggestion ou un compte
+rendu consomme quelques milliers de jetons, soit de l'ordre de quelques centimes de dollar par demande. Chaque utilisateur
+est limité à 20 demandes par heure. Pour réduire le coût, `ANTHROPIC_MODEL=claude-sonnet-5` (2 $ / 10 $) ou
+`claude-haiku-4-5` (1 $ / 5 $) ; à tester d'abord sur quelques dossiers pour vérifier la qualité du français.
+
+Ne jamais coller la clé dans le code, un document, un message ou une capture d'écran. Si elle a été exposée,
+la supprimer dans la console Claude et en créer une nouvelle.

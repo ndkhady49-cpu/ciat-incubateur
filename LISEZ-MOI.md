@@ -26,6 +26,7 @@ et communiqué au jury uniquement. Ces comptes n'ont pas accès à `/admin/`.
 | Porteur de projet | porteur@ciat.sn |
 
 ## Assistant IA
+API Claude via le SDK officiel `anthropic`, modèle `claude-opus-5` (variable `ANTHROPIC_MODEL` pour en changer).
 Sans clé, mode démonstration. Pour une vraie IA : définir `ANTHROPIC_API_KEY` avant de lancer
 (Windows : `set ANTHROPIC_API_KEY=votre_cle`). Ne jamais écrire la clé dans le code.
 Le texte suggéré n'est enregistré qu'après relecture et validation du porteur.

@@ -294,3 +294,40 @@ class AuditTests(TestCase):
         env.pop("DJANGO_SECRET_KEY")
         out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
         self.assertIn("DJANGO_SECRET_KEY est obligatoire", out.stderr)
+
+
+class AssistantIATests(TestCase):
+    """Appel à Claude simulé (aucune requête réelle) : réponse, refus, clé invalide."""
+
+    def reponse(self, texte, stop="end_turn"):
+        bloc = mock.Mock(type="text", text=texte)
+        return mock.Mock(stop_reason=stop, content=[mock.Mock(type="thinking"), bloc], _request_id="req_test")
+
+    def appel(self, **kw):
+        from . import ia
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "cle-de-test"}),                 mock.patch.object(ia.anthropic, "Anthropic") as client:
+            creer = client.return_value.beta.messages.create
+            for k, v in kw.items():
+                setattr(creer, k, v)
+            resultat = ia.suggestion_ia("pitch", "Séchoir solaire")
+        return resultat, creer
+
+    def test_reponse_claude(self):
+        (texte, source), creer = self.appel(return_value=self.reponse("Un pitch rédigé par Claude."))
+        self.assertEqual((texte, source), ("Un pitch rédigé par Claude.", "IA"))
+        args = creer.call_args.kwargs
+        self.assertEqual(args["model"], "claude-opus-5")
+        self.assertEqual(args["fallbacks"], "default")
+        self.assertIn("server-side-fallback-2026-07-01", args["betas"])
+
+    def test_refus_passe_en_demonstration(self):
+        (texte, source), _ = self.appel(return_value=self.reponse("", stop="refusal"))
+        self.assertEqual(source, "démonstration")
+
+    def test_cle_invalide_passe_en_demonstration(self):
+        import anthropic
+        import httpx2
+        err = anthropic.AuthenticationError("cle invalide", response=httpx2.Response(
+            401, request=httpx2.Request("POST", "https://api.anthropic.com/v1/messages")), body=None)
+        (texte, source), _ = self.appel(side_effect=err)
+        self.assertEqual(source, "démonstration")

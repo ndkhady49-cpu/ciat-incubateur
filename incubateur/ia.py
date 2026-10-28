@@ -1,6 +1,18 @@
-"""Assistant IA : suggestion de texte et compte rendu de suivi. Sans clé API, mode démonstration."""
+"""Assistant IA : suggestion de texte et compte rendu de suivi, via l'API Claude (SDK officiel anthropic).
+Sans clé ANTHROPIC_API_KEY, ou si l'API est indisponible, l'application passe en mode démonstration."""
+import logging
 import os
-import requests
+
+import anthropic
+
+logger = logging.getLogger(__name__)
+
+MODELE = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5")
+# Rédactions courtes : effort « low » pour répondre en quelques secondes (gunicorn coupe une requête après 30 s)
+EFFORT = os.environ.get("ANTHROPIC_EFFORT", "low")
+SYSTEME = ("Tu aides des porteurs de projet d'un incubateur sénégalais (CIAT, ISEP Amadou Trawaré de Diamniadio). "
+           "Réponds en français, dans un style clair et professionnel, sans inventer de faits absents du texte fourni. "
+           "Donne directement le texte demandé, sans introduction ni commentaire.")
 
 CONSIGNES = {"reformuler": "Reformule ce texte de façon claire et professionnelle.",
              "pitch": "Rédige un pitch de 4 phrases à partir de ce texte.",
@@ -13,23 +25,40 @@ CONSIGNE_CR = ("Rédige le compte rendu de suivi de ce projet incubé, en 4 part
                "Utilise uniquement les faits ci-dessous ; si une information manque, écris « non renseigné ».")
 
 
-def _appel_claude(consigne, texte, max_tokens=600):
-    """Appelle l'API Anthropic ; retourne le texte, ou None si pas de clé ou en cas d'erreur."""
-    cle = os.environ.get("ANTHROPIC_API_KEY")
-    if not cle:
+def _appel_claude(consigne, texte):
+    """Appelle Claude ; retourne le texte, ou None (pas de clé, erreur, refus) pour passer en démonstration."""
+    if not os.environ.get("ANTHROPIC_API_KEY"):
         return None
     try:
-        r = requests.post(
-            "https://api.anthropic.com/v1/messages", timeout=30,
-            headers={"x-api-key": cle, "anthropic-version": "2023-06-01", "content-type": "application/json"},
-            json={"model": os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6"), "max_tokens": max_tokens,
-                  "system": "Tu aides des porteurs de projet d'un incubateur sénégalais. Réponds en français, "
-                            "sans inventer de faits absents du texte.",
-                  "messages": [{"role": "user", "content": consigne + "\n\n" + texte}]})
-        r.raise_for_status()
-        return r.json()["content"][0]["text"]
-    except Exception:
+        client = anthropic.Anthropic(timeout=25.0, max_retries=1)
+        reponse = client.beta.messages.create(
+            model=MODELE,
+            max_tokens=8000,
+            system=SYSTEME,
+            messages=[{"role": "user", "content": consigne + "\n\n" + texte}],
+            output_config={"effort": EFFORT},
+            # En cas de refus des filtres de sécurité, l'API relance la demande sur le modèle de repli recommandé
+            betas=["server-side-fallback-2026-07-01"],
+            fallbacks="default",
+        )
+    except anthropic.AuthenticationError:
+        logger.error("Assistant IA : clé ANTHROPIC_API_KEY refusée. Mode démonstration.")
         return None
+    except anthropic.RateLimitError:
+        logger.warning("Assistant IA : limite de débit atteinte. Mode démonstration.")
+        return None
+    except anthropic.APIStatusError as e:
+        logger.warning("Assistant IA : erreur API %s (requête %s). Mode démonstration.", e.status_code,
+                       e.response.headers.get("request-id"))
+        return None
+    except anthropic.APIConnectionError:
+        logger.warning("Assistant IA : API injoignable ou délai dépassé. Mode démonstration.")
+        return None
+    if reponse.stop_reason == "refusal":
+        logger.info("Assistant IA : demande refusée (requête %s). Mode démonstration.", reponse._request_id)
+        return None
+    texte_ia = "".join(b.text for b in reponse.content if b.type == "text").strip()
+    return texte_ia or None
 
 
 def suggestion_ia(mode, texte):
@@ -59,8 +88,7 @@ def faits_projet(p):
 
 def compte_rendu_ia(p):
     """Retourne (texte, source). En démonstration, compte rendu structuré construit à partir des données."""
-    faits = faits_projet(p)
-    rep = _appel_claude(CONSIGNE_CR, faits, max_tokens=900)
+    rep = _appel_claude(CONSIGNE_CR, faits_projet(p))
     if rep:
         return rep, "IA"
     jalons = list(p.jalons.all())
