@@ -26,6 +26,7 @@ Responsabilités partagées : rédaction du cahier des charges, scénarios utili
 
 ### 3.1 Problème identifié
 Le CIAT gère plusieurs cohortes de porteurs de projets par an. Le processus implique la réception de dossiers, leur évaluation par un comité, l'affectation de mentors, le suivi par jalons, puis le suivi des projets après leur sortie de l'incubateur. Sans outil intégré, le coordonnateur doit jongler entre des tableurs, des e-mails et des documents papier, ce qui entraîne :
+
 - des pertes d'information lors du passage d'une étape à l'autre ;
 - des retards non détectés dans le suivi des jalons ;
 - l'absence de suivi après l'incubation, donc aucune mesure de l'impact (emplois, chiffre d'affaires) ;
@@ -58,6 +59,7 @@ L'application suit le modèle MVT de Django (Model-View-Template). Le backend Py
 
 ### 4.2 Modèle de données
 Huit entités (détail dans `docs/schema_base_de_donnees.md`) :
+
 - **User** : 4 rôles, e-mail comme identifiant, genre facultatif pour les statistiques.
 - **Projet** : dossier, statut, mentor, objectifs et date de fin d'incubation.
 - **Evaluation** : grille sur 4 critères notés de 0 à 5, décision et motivation obligatoire.
@@ -132,6 +134,7 @@ Le tableau de bord les présente avec des filtres par cohorte, domaine et statut
 
 ### 6.3 Contrôle de qualité
 La qualité est assurée à deux niveaux :
+
 - **À la saisie** : champs obligatoires, listes de choix fermées (domaines, statuts, situations), notes bornées de 0 à 5, dates validées, un seul suivi par période, extension et taille des fichiers vérifiées.
 - **Après coup** : `python manage.py analyse` vérifie la cohérence des données. Résultat sur le jeu de démonstration du 27/10/2026 :
 
@@ -199,6 +202,7 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
 
 ### 10.2 Tests automatisés
 27 tests couvrent les parcours critiques (`python manage.py test`, 27/27 OK, sur SQLite et PostgreSQL) :
+
 1. Accès protégé et vérification CSRF.
 2. Dépôt de dossier et calcul de complétude.
 3. Rejet d'un fichier interdit (.exe).

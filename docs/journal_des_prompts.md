@@ -52,6 +52,7 @@ Propose une analyse SWOT courte (forces, faiblesses, opportunités, menaces).
 **Résultat** : structure complète du projet (models.py, views.py, forms.py, templates, urls.py, settings.py) générée en un seul passage.
 
 **Corrections apportées** :
+
 - Ajout du champ `genre` sur le modèle User (absent de la première version).
 - Correction du `limit_choices_to={"role": "mentor"}` sur la ForeignKey mentor.
 - Ajustement des couleurs CSS pour correspondre à la charte ISEP (tons marron/beige).
@@ -62,6 +63,7 @@ Propose une analyse SWOT courte (forces, faiblesses, opportunités, menaces).
 **Résultat** : commande fonctionnelle avec Random(42) pour la reproductibilité.
 
 **Corrections apportées** :
+
 - Ajout de la vérification `if User.objects.exists()` pour éviter les doublons.
 - Diversification des prénoms sénégalais (Aminata, Omar, Khady, Samba, etc.).
 - Ajout de jalons « Suivi à 3 mois » parmi les jalons générés.
@@ -72,6 +74,7 @@ Propose une analyse SWOT courte (forces, faiblesses, opportunités, menaces).
 **Résultat** : 5 tests couvrant les parcours critiques.
 
 **Corrections apportées** :
+
 - Ajout de `@override_settings(MEDIA_ROOT=tempfile.mkdtemp())` pour isoler les fichiers de test.
 - Correction du test IA pour utiliser `mock.patch.dict(os.environ)` afin de supprimer la clé API pendant le test.
 
@@ -81,6 +84,7 @@ Propose une analyse SWOT courte (forces, faiblesses, opportunités, menaces).
 **Résultat** : fichier YAML fonctionnel.
 
 **Corrections apportées** :
+
 - Séparation du buildCommand et du startCommand (initialement tout était dans startCommand).
 - Ajout de `makemigrations incubateur` dans le build.
 - Ajout de `generateValue: true` pour DJANGO_SECRET_KEY.
@@ -91,6 +95,7 @@ Propose une analyse SWOT courte (forces, faiblesses, opportunités, menaces).
 **Résultat** : CSS complet avec variables, gradients, hover effects, animations fadeIn/slideIn.
 
 **Corrections apportées** :
+
 - Ajustement des breakpoints responsive (768px et 480px).
 - Ajout de `position: sticky` sur le header.
 - Réduction de la taille des polices sur mobile.

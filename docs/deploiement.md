@@ -54,12 +54,14 @@ Dans **Settings** > **Build Command**, mettre : `bash build.sh`. Commande de dé
 ## 4. Mise en ligne
 
 Au déploiement suivant, `build.sh` :
+
 1. installe les dépendances et prépare les fichiers statiques ;
 2. applique les migrations sur Neon (`migrate`) — les migrations sont créées en local et versionnées ;
 3. crée le compte coordonnateur réel s'il n'existe pas (`init_coordo`) ;
 4. si `SEED_DEMO=1`, crée une seule fois les comptes et les 30 projets de démonstration (`seed`).
 
 Vérifications après le déploiement :
+
 - se connecter avec `CIAT_ADMIN_EMAIL` et ouvrir `/admin/` ;
 - déposer un document sur un projet, redéployer (**Manual Deploy**), vérifier qu'il est toujours téléchargeable ;
 - se connecter avec un compte de démonstration : `/admin/` doit être refusé.

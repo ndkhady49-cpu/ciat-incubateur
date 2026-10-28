@@ -9,6 +9,7 @@ en passant par les quatre rôles : porteur, comité, coordonnateur, mentor. On t
 ## Préparation (avant d'enregistrer)
 
 **Matériel**
+
 - Enregistreur d'écran : OBS Studio (gratuit) ou l'outil intégré de Windows (Win + Alt + R), en 1920 × 1080.
 - Un micro correct (casque avec micro) et une pièce calme. Navigateur Chrome ou Edge, zoom à 110 %.
 - Fermer les onglets et notifications inutiles. Activer « Ne pas déranger ».
@@ -27,16 +28,19 @@ Se connecter **avant** l'enregistrement dans chaque fenêtre, sauf pour le porte
 laisser le navigateur le remplir, ou couper ce passage au montage.
 
 **Fichiers à préparer**
+
 - `fiche_projet_sechoir.pdf` : une page décrivant le projet (sert de pièce jointe du dossier).
 - `photo_prototype.jpg` : une photo d'un séchoir ou d'un prototype (sert de preuve pour un jalon).
 
 **Textes à copier-coller** (dans un bloc-notes ouvert hors champ)
+
 - Problème : *Dans la région de Thiès, beaucoup de petits producteurs de mangues perdent une partie de leur récolte faute de moyens de conservation.*
 - Solution (brouillon pour l'IA) : *Notre projet est un séchoir solaire à bas coût, fabriqué avec des matériaux locaux, qui permet de sécher les fruits et de les vendre toute l'année.*
 - Motivation du comité : *Projet à fort impact local, prototype simple et peu coûteux. L'équipe doit préciser son modèle économique.*
 - Objectifs du mentor : *Tester le prototype chez 5 producteurs. Signer une première commande. Chiffrer le coût de fabrication.*
 
 **Juste avant de lancer l'enregistrement**
+
 - Ouvrir le site une première fois et attendre qu'il s'affiche : sur l'offre gratuite, Render met 30 à 60 secondes à se réveiller.
 - Faire un essai de l'assistant IA (Groq) : il doit afficher « Générée par l'IA ».
 - Faire **Ctrl + F5** dans chaque fenêtre pour charger la dernière version de l'interface.
@@ -59,6 +63,7 @@ laisser le navigateur le remplir, ou couper ce passage au montage.
 ## Scène 2 — Le porteur dépose son dossier (0:30 – 2:00)
 
 **À l'écran**
+
 1. Cliquer sur **Déposer un projet** → formulaire d'inscription. Remplir nom, genre, e-mail, mot de passe → **Créer mon compte**.
 2. Menu **Mes dossiers** → **Déposer un dossier**. Titre : *Séchoir solaire pour mangues*. Domaine : *Agriculture,
    transformation et environnement*. Coller le problème. Laisser la solution vide. Joindre `fiche_projet_sechoir.pdf`.
@@ -78,6 +83,7 @@ laisser le navigateur le remplir, ou couper ce passage au montage.
 ## Scène 3 — Le comité évalue (2:00 – 2:50)
 
 **À l'écran** (fenêtre du comité)
+
 1. **Projets** : taper « séchoir » dans la recherche, ou cliquer sur la puce **Soumis**. Ouvrir le dossier.
 2. Lire rapidement le dossier, ouvrir la pièce jointe.
 3. **Nouvelle évaluation** : Innovation 4, Faisabilité 4, Impact 5, Équipe 3, décision **Accepté**, coller la motivation
@@ -92,6 +98,7 @@ laisser le navigateur le remplir, ou couper ce passage au montage.
 ## Scène 4 — Le coordonnateur pilote (2:50 – 4:10)
 
 **À l'écran** (fenêtre du coordonnateur)
+
 1. Ouvrir le projet → **Accompagnement** : choisir **Fatou Sow (mentor)** → **Affecter**.
 2. Menu **Tableau de bord** : montrer les indicateurs (dossiers, taux de sélection, jalons en retard, avancement),
    puis les cartes **Jalons en retard** et **Suivis post-incubation à réaliser**.
@@ -111,6 +118,7 @@ laisser le navigateur le remplir, ou couper ce passage au montage.
 ## Scène 5 — Le mentor accompagne (4:10 – 5:40)
 
 **À l'écran** (fenêtre du mentor)
+
 1. **Mes projets suivis** → ouvrir le séchoir solaire.
 2. **Modifier les objectifs** : coller les objectifs, fixer une date de fin d'incubation → **Enregistrer**.
 3. **Nouveau jalon** : *Prototype testé chez 5 producteurs*, échéance dans un mois → **Ajouter**.
@@ -133,6 +141,7 @@ laisser le navigateur le remplir, ou couper ce passage au montage.
 ## Scène 6 — Administration et sécurité (5:40 – 6:30)
 
 **À l'écran** (compte coordonnateur réel, `/admin/`)
+
 1. Accueil de l'administration : les indicateurs et raccourcis aux couleurs du CIAT.
 2. **Créer un compte (mentor, comité…)** : montrer le formulaire avec le choix du rôle (ne pas enregistrer).
 3. Liste des **Projets** : badges de statut, complétude, filtres. Ouvrir un projet : évaluations, jalons et documents
