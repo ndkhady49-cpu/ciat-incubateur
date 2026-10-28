@@ -198,7 +198,7 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
 - ✅ Assistant IA de rédaction avec validation humaine
 
 ### 10.2 Tests automatisés
-18 tests couvrent les parcours critiques (`python manage.py test`, 18/18 OK) :
+27 tests couvrent les parcours critiques (`python manage.py test`, 27/27 OK, sur SQLite et PostgreSQL) :
 1. Accès protégé et vérification CSRF.
 2. Dépôt de dossier et calcul de complétude.
 3. Rejet d'un fichier interdit (.exe).
@@ -216,7 +216,10 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
 15. Quota d'appels à l'IA.
 16. Création du compte coordonnateur, démonstration avec mot de passe secret et sans accès admin, suppression de la démonstration.
 17. Pages d'erreur 403 et 404.
-18. Réglages de production : PostgreSQL, stockage R2 privé, clé secrète obligatoire.
+18. Réglages de production : PostgreSQL, stockage R2 privé, clé secrète obligatoire, alerte si l'adresse R2 est invalide.
+19-21. Assistant Claude (API simulée) : réponse, refus des filtres de sécurité, clé invalide.
+22-25. Assistant Groq (API simulée) : réponse, limite gratuite atteinte, réponse tronquée, choix du fournisseur.
+26-27. Stockage de fichiers en panne : dossier enregistré sans pièce jointe, document refusé proprement, téléchargement sans erreur 500.
 
 ### 10.3 Anomalies relevées et corrigées
 | Anomalie | Correction |
@@ -232,6 +235,7 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
 | Projet refusé après réévaluation mais toujours suivi par un mentor | Le mentor est retiré si la décision n'est plus « accepté » |
 | Aucune limite de tentatives de connexion ni d'appels à l'IA | Blocage temporaire et quota horaire |
 | Impossible de changer son mot de passe | Page « Changer mon mot de passe » |
+| Erreur 500 au dépôt d'un dossier avec pièce jointe, en production (adresse R2 restée à sa valeur d'exemple) | Adresse corrigée ; le dossier est désormais enregistré même si le stockage est indisponible, et une adresse invalide est signalée au démarrage |
 
 ## 11. Déploiement
 
