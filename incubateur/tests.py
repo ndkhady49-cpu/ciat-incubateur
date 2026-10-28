@@ -243,6 +243,17 @@ class AuditTests(TestCase):
             call_command("init_coordo", stdout=io.StringIO())  # idempotent
         admin = User.objects.get(username="direction@ciat.sn")
         self.assertTrue(admin.is_superuser and admin.role == "coordo")
+        # porteur inscrit avec l'e-mail du coordonnateur : promu, et son mot de passe est remplacé
+        with mock.patch.dict(os.environ, {"CIAT_ADMIN_EMAIL": "p@x.sn", "CIAT_ADMIN_PASSWORD": "Baobab-Diamniadio-26"}):
+            call_command("init_coordo", stdout=io.StringIO())
+            self.porteur.refresh_from_db()
+            self.assertTrue(self.porteur.is_superuser and self.porteur.role == "coordo")
+            self.assertTrue(self.porteur.check_password("Baobab-Diamniadio-26"))
+            self.porteur.set_password("Nouveau-Mot-De-Passe-26")
+            self.porteur.save()
+            call_command("init_coordo", stdout=io.StringIO())  # déjà coordonnateur : mot de passe conservé
+            self.porteur.refresh_from_db()
+            self.assertTrue(self.porteur.check_password("Nouveau-Mot-De-Passe-26"))
         with mock.patch.dict(os.environ):
             os.environ.pop("DEMO_PASSWORD", None)
             call_command("seed", stdout=io.StringIO())  # DEBUG=False en test : refus sans mot de passe
