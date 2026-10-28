@@ -43,8 +43,8 @@ Service `ciat-incubateur` > **Environment** :
 | `DEMO_PASSWORD` | mot de passe commun des comptes de démonstration, communiqué au jury seulement |
 | `DJANGO_DEBUG` | `0` |
 | `DJANGO_SECRET_KEY` | longue valeur aléatoire (bouton **Generate**) |
-| `ANTHROPIC_API_KEY` | facultatif : clé de l'API Claude (voir § 6) ; sans clé, l'IA fonctionne en mode démonstration |
-| `ANTHROPIC_MODEL` | facultatif : `claude-opus-5` par défaut |
+| `GROQ_API_KEY` | clé Groq gratuite pour l'assistant IA (voir § 6) ; sans clé, mode démonstration |
+| `ANTHROPIC_API_KEY`, `IA_FOURNISSEUR` | facultatif : Claude à la place de Groq (voir § 6) |
 
 Dans **Settings** > **Build Command**, mettre : `bash build.sh`. Commande de démarrage : `gunicorn config.wsgi`.
 
@@ -80,20 +80,28 @@ Vérifications après le déploiement :
 - **Limites anti-abus** : 5 échecs de connexion (par e-mail ou par adresse IP) bloquent la connexion 15 minutes ;
   20 appels à l'IA par utilisateur et par heure.
 
-## 6. Assistant IA : clé de l'API Claude
+## 6. Assistant IA : clé Groq (gratuite)
 
-1. Sur https://platform.claude.com, ouvrir **Settings > Billing** et ajouter des crédits (l'API est payante à l'usage).
-   Dans **Settings > Limits**, fixer une **limite de dépense mensuelle** pour ne jamais dépasser le budget prévu.
-2. **Settings > API Keys > Create Key** : nommer la clé `ciat-incubateur-render`, la copier (affichée une seule fois).
-3. Sur Render, **Environment** : ajouter `ANTHROPIC_API_KEY` avec cette valeur, puis enregistrer (redéploiement).
+Par défaut, l'assistant utilise **Groq**, dont l'offre gratuite suffit au volume du CIAT, avec le modèle ouvert
+`openai/gpt-oss-120b`.
+
+1. Créer un compte sur https://console.groq.com (pas de carte bancaire pour l'offre gratuite).
+2. **API Keys > Create API Key** : nommer la clé `ciat-incubateur-render`, la copier (affichée une seule fois).
+3. Sur Render, **Environment** : ajouter `GROQ_API_KEY` avec cette valeur, puis enregistrer (redéploiement).
 4. Vérifier : en porteur, ouvrir **Assistant IA** et générer une suggestion. La mention « Générée par l'IA » confirme
-   l'appel réel ; « mode démonstration » signifie que la clé est absente ou refusée (le journal Render en indique la raison :
-   « clé ANTHROPIC_API_KEY refusée », « limite de débit atteinte », « API injoignable »).
+   l'appel réel ; « mode démonstration » signifie que la clé est absente ou refusée. Le journal Render en indique la
+   raison : « clé GROQ_API_KEY refusée », « limite gratuite Groq atteinte », « API Groq injoignable ».
 
-Coût indicatif avec `claude-opus-5` (5 $ par million de jetons en entrée, 25 $ en sortie) : une suggestion ou un compte
-rendu consomme quelques milliers de jetons, soit de l'ordre de quelques centimes de dollar par demande. Chaque utilisateur
-est limité à 20 demandes par heure. Pour réduire le coût, `ANTHROPIC_MODEL=claude-sonnet-5` (2 $ / 10 $) ou
-`claude-haiku-4-5` (1 $ / 5 $) ; à tester d'abord sur quelques dossiers pour vérifier la qualité du français.
+Limites de l'offre gratuite pour `openai/gpt-oss-120b` (octobre 2026, partagées par toute l'organisation Groq) :
+30 requêtes par minute, 1 000 par jour, 8 000 jetons par minute, 200 000 par jour. Une suggestion consomme environ
+1 000 à 2 000 jetons. En plus, la plateforme limite chaque utilisateur à 20 demandes par heure.
 
-Ne jamais coller la clé dans le code, un document, un message ou une capture d'écran. Si elle a été exposée,
-la supprimer dans la console Claude et en créer une nouvelle.
+Variables facultatives : `GROQ_MODEL` (autre modèle Groq, par exemple `openai/gpt-oss-20b`, plus rapide) et
+`GROQ_EFFORT` (`low`, `medium` par défaut, `high`).
+
+**Option payante : Claude.** Avec `ANTHROPIC_API_KEY` (clé créée sur https://platform.claude.com, avec crédits et
+limite de dépense) et `IA_FOURNISSEUR=anthropic`, l'assistant utilise `claude-opus-5` (modifiable par `ANTHROPIC_MODEL`).
+Sans `IA_FOURNISSEUR`, Groq est prioritaire dès que `GROQ_API_KEY` est définie.
+
+Ne jamais coller une clé dans le code, un document, un message ou une capture d'écran. Si elle a été exposée,
+la supprimer dans la console du fournisseur et en créer une nouvelle.

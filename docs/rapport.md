@@ -48,7 +48,7 @@ L'application suit le modèle MVT de Django (Model-View-Template). Le backend Py
 | Framework | Django 5 | Maturité, sécurité intégrée (CSRF, auth), ORM |
 | Base de données | PostgreSQL (Neon) en production, SQLite en local | Données persistantes et sauvegardées ; aucune installation en développement |
 | Fichiers déposés | Cloudflare R2 (bucket privé) | Fichiers conservés entre les déploiements, jamais accessibles par lien public |
-| IA | API Anthropic (Claude) | Qualité du français, mode démonstration sans clé |
+| IA | API Groq (`openai/gpt-oss-120b`), Claude en option | Offre gratuite suffisante pour le volume du CIAT ; fournisseur interchangeable par une variable ; mode démonstration sans clé |
 | Graphiques | Chart.js | Graphiques interactifs (survol, légendes cliquables) |
 | Export PDF | ReportLab | Génération de fiches et comptes rendus |
 | Export Excel | openpyxl | Format .xlsx natif, plusieurs feuilles |
@@ -106,7 +106,7 @@ Huit entités (détail dans `docs/schema_base_de_donnees.md`) :
 - **Données personnelles** : l'interface invite à ne pas saisir de données sensibles ; seuls le nom du porteur et du mentor figurent dans le résumé envoyé.
 
 ### 5.3 Implémentation
-Appel à l'API Claude d'Anthropic par le SDK officiel Python (`anthropic`), modèle `claude-opus-5` (modifiable par la variable `ANTHROPIC_MODEL`), effort de raisonnement « low » pour répondre en quelques secondes. Délai maximal de 25 secondes et une seule nouvelle tentative. Si les filtres de sécurité refusent une demande, l'API la relance automatiquement sur le modèle de repli recommandé (`fallbacks: "default"`). En cas de clé invalide, de quota, de refus ou d'erreur réseau, l'application bascule sur le mode démonstration et l'incident est journalisé (sans jamais écrire la clé).
+Le fournisseur est choisi par une variable d'environnement. Par défaut, l'application utilise **Groq**, dont l'offre gratuite suffit au volume du CIAT : SDK officiel `groq`, modèle ouvert `openai/gpt-oss-120b` (un modèle qui raisonne avant de répondre ; seule la réponse finale est conservée, `include_reasoning=False`), effort de raisonnement moyen. L'API Claude d'Anthropic (SDK `anthropic`, modèle `claude-opus-5`) reste disponible en option. Délai maximal de 25 secondes et une seule nouvelle tentative. En cas de clé invalide, de limite gratuite atteinte (30 requêtes par minute, 1 000 par jour), de réponse tronquée ou d'erreur réseau, l'application bascule sur le mode démonstration et l'incident est journalisé, sans jamais écrire la clé.
 
 ## 6. Données et indicateurs
 
@@ -240,7 +240,7 @@ Les chiffres ci-dessous proviennent du jeu de **démonstration** (30 projets fic
   comptes de démonstration pour le jury (une seule fois, si `SEED_DEMO=1`). Détail dans `docs/deploiement.md`.
 - **Démarrage** : `gunicorn config.wsgi`
 - **Variables d'environnement** : `DATABASE_URL`, `R2_*`, `CIAT_ADMIN_*`, `DEMO_PASSWORD`, `DJANGO_DEBUG=0`,
-  `DJANGO_SECRET_KEY`, `ANTHROPIC_API_KEY` (facultative), toutes saisies dans Render et jamais dans le code.
+  `DJANGO_SECRET_KEY`, `GROQ_API_KEY` (facultative ; `ANTHROPIC_API_KEY` en option), toutes saisies dans Render et jamais dans le code.
 
 ## 12. Limites et perspectives
 

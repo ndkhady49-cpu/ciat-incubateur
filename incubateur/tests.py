@@ -69,6 +69,7 @@ class ParcoursTests(TestCase):
         self.client.force_login(self.porteur)
         with mock.patch.dict(os.environ):
             os.environ.pop("ANTHROPIC_API_KEY", None)
+            os.environ.pop("GROQ_API_KEY", None)
             r = self.client.post(reverse("ia"), {"texte": "Mon idée", "mode": "pitch"})
         self.assertContains(r, "mode démonstration")
         self.client.post(reverse("ia_accepter"), {"texte": "Texte validé", "project_id": p.pk, "champ": "problem"})
@@ -149,6 +150,7 @@ class SuiviTests(TestCase):
         self.client.force_login(self.mentor)
         with mock.patch.dict(os.environ):
             os.environ.pop("ANTHROPIC_API_KEY", None)
+            os.environ.pop("GROQ_API_KEY", None)
             r = self.client.post(reverse("compte_rendu", args=[self.p.pk]), {"action": "generer"})
         self.assertContains(r, "mode démonstration")
         self.assertContains(r, "Prototype : en retard")
@@ -229,6 +231,7 @@ class AuditTests(TestCase):
         self.client.force_login(self.porteur)
         with mock.patch.dict(os.environ):
             os.environ.pop("ANTHROPIC_API_KEY", None)
+            os.environ.pop("GROQ_API_KEY", None)
             for _ in range(2):
                 self.assertContains(self.client.post(reverse("ia"), {"texte": "Idée", "mode": "pitch"}), "Problème : Idée")
             r = self.client.post(reverse("ia"), {"texte": "Idée", "mode": "pitch"})
@@ -305,7 +308,7 @@ class AssistantIATests(TestCase):
 
     def appel(self, **kw):
         from . import ia
-        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "cle-de-test"}),                 mock.patch.object(ia.anthropic, "Anthropic") as client:
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "cle-de-test", "IA_FOURNISSEUR": "anthropic"}),                 mock.patch.object(ia.anthropic, "Anthropic") as client:
             creer = client.return_value.beta.messages.create
             for k, v in kw.items():
                 setattr(creer, k, v)
@@ -331,3 +334,55 @@ class AssistantIATests(TestCase):
             401, request=httpx2.Request("POST", "https://api.anthropic.com/v1/messages")), body=None)
         (texte, source), _ = self.appel(side_effect=err)
         self.assertEqual(source, "démonstration")
+
+
+class AssistantGroqTests(TestCase):
+    """Appel à Groq simulé (aucune requête réelle) : réponse, quota gratuit atteint, réponse tronquée, choix du fournisseur."""
+
+    def reponse(self, texte, fin="stop"):
+        choix = mock.Mock(finish_reason=fin, message=mock.Mock(content=texte))
+        return mock.Mock(choices=[choix])
+
+    def appel(self, env=None, **kw):
+        from . import ia
+        env = env or {"GROQ_API_KEY": "cle-de-test"}
+        with mock.patch.dict(os.environ, env), mock.patch.object(ia.groq, "Groq") as client:
+            for k in ("GROQ_API_KEY", "ANTHROPIC_API_KEY", "IA_FOURNISSEUR"):
+                if k not in env:
+                    os.environ.pop(k, None)
+            creer = client.return_value.chat.completions.create
+            for k, v in kw.items():
+                setattr(creer, k, v)
+            resultat = ia.suggestion_ia("swot", "Séchoir solaire")
+        return resultat, creer
+
+    def test_reponse_groq(self):
+        (texte, source), creer = self.appel(return_value=self.reponse("Forces : énergie gratuite."))
+        self.assertEqual((texte, source), ("Forces : énergie gratuite.", "IA"))
+        args = creer.call_args.kwargs
+        self.assertEqual(args["model"], "openai/gpt-oss-120b")
+        self.assertIs(args["include_reasoning"], False)
+        self.assertEqual(args["messages"][0]["role"], "system")
+
+    def test_quota_gratuit_atteint(self):
+        import groq
+        import httpx
+        err = groq.RateLimitError("limite", response=httpx.Response(
+            429, request=httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")), body=None)
+        (texte, source), _ = self.appel(side_effect=err)
+        self.assertEqual(source, "démonstration")
+
+    def test_reponse_tronquee(self):
+        (texte, source), _ = self.appel(return_value=self.reponse("Forces : ", fin="length"))
+        self.assertEqual(source, "démonstration")
+
+    def test_choix_du_fournisseur(self):
+        from . import ia
+        with mock.patch.dict(os.environ, {"GROQ_API_KEY": "g", "ANTHROPIC_API_KEY": "a"}):
+            os.environ.pop("IA_FOURNISSEUR", None)
+            self.assertEqual(ia.fournisseur(), "groq")
+            os.environ["IA_FOURNISSEUR"] = "anthropic"
+            self.assertEqual(ia.fournisseur(), "anthropic")
+        with mock.patch.dict(os.environ, {"IA_FOURNISSEUR": "groq"}):
+            os.environ.pop("GROQ_API_KEY", None)
+            self.assertIsNone(ia.fournisseur())

@@ -1,14 +1,19 @@
-"""Assistant IA : suggestion de texte et compte rendu de suivi, via l'API Claude (SDK officiel anthropic).
-Sans clé ANTHROPIC_API_KEY, ou si l'API est indisponible, l'application passe en mode démonstration."""
+"""Assistant IA : suggestion de texte et compte rendu de suivi.
+Fournisseur choisi par IA_FOURNISSEUR (« groq » ou « anthropic ») ; par défaut Groq si GROQ_API_KEY est définie,
+sinon Claude si ANTHROPIC_API_KEY l'est. Sans clé, ou si l'API est indisponible : mode démonstration."""
 import logging
 import os
 
 import anthropic
+import groq
 
 logger = logging.getLogger(__name__)
 
+# Groq (offre gratuite) : modèle ouvert gpt-oss-120b, qui raisonne avant de répondre
+MODELE_GROQ = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+EFFORT_GROQ = os.environ.get("GROQ_EFFORT", "medium")
+# Claude (payant) ; effort « low » pour répondre en quelques secondes (gunicorn coupe une requête après 30 s)
 MODELE = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5")
-# Rédactions courtes : effort « low » pour répondre en quelques secondes (gunicorn coupe une requête après 30 s)
 EFFORT = os.environ.get("ANTHROPIC_EFFORT", "low")
 SYSTEME = ("Tu aides des porteurs de projet d'un incubateur sénégalais (CIAT, ISEP Amadou Trawaré de Diamniadio). "
            "Réponds en français, dans un style clair et professionnel, sans inventer de faits absents du texte fourni. "
@@ -25,10 +30,56 @@ CONSIGNE_CR = ("Rédige le compte rendu de suivi de ce projet incubé, en 4 part
                "Utilise uniquement les faits ci-dessous ; si une information manque, écris « non renseigné ».")
 
 
-def _appel_claude(consigne, texte):
-    """Appelle Claude ; retourne le texte, ou None (pas de clé, erreur, refus) pour passer en démonstration."""
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+def fournisseur():
+    """« groq », « anthropic » ou None (mode démonstration)."""
+    choix = os.environ.get("IA_FOURNISSEUR", "").strip().lower()
+    cles = {"groq": "GROQ_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
+    if choix in cles:
+        return choix if os.environ.get(cles[choix]) else None
+    return next((f for f in ("groq", "anthropic") if os.environ.get(cles[f])), None)
+
+
+def _appel_ia(consigne, texte):
+    """Retourne le texte produit par l'IA, ou None (pas de clé, erreur, refus) pour passer en démonstration."""
+    f = fournisseur()
+    if f == "groq":
+        return _appel_groq(consigne, texte)
+    if f == "anthropic":
+        return _appel_claude(consigne, texte)
+    return None
+
+
+def _appel_groq(consigne, texte):
+    try:
+        client = groq.Groq(timeout=25.0, max_retries=1)
+        reponse = client.chat.completions.create(
+            model=MODELE_GROQ,
+            messages=[{"role": "system", "content": SYSTEME},
+                      {"role": "user", "content": consigne + "\n\n" + texte}],
+            reasoning_effort=EFFORT_GROQ,
+            include_reasoning=False,  # seule la réponse finale, sans le raisonnement
+            max_completion_tokens=4000,
+        )
+    except groq.AuthenticationError:
+        logger.error("Assistant IA : clé GROQ_API_KEY refusée. Mode démonstration.")
         return None
+    except groq.RateLimitError:
+        logger.warning("Assistant IA : limite gratuite Groq atteinte (requêtes ou jetons). Mode démonstration.")
+        return None
+    except groq.APIStatusError as e:
+        logger.warning("Assistant IA : erreur API Groq %s. Mode démonstration.", e.status_code)
+        return None
+    except groq.APIConnectionError:
+        logger.warning("Assistant IA : API Groq injoignable ou délai dépassé. Mode démonstration.")
+        return None
+    choix = reponse.choices[0]
+    if choix.finish_reason == "length":
+        logger.warning("Assistant IA : réponse Groq tronquée. Mode démonstration.")
+        return None
+    return (choix.message.content or "").strip() or None
+
+
+def _appel_claude(consigne, texte):
     try:
         client = anthropic.Anthropic(timeout=25.0, max_retries=1)
         reponse = client.beta.messages.create(
@@ -63,7 +114,7 @@ def _appel_claude(consigne, texte):
 
 def suggestion_ia(mode, texte):
     """Retourne (texte, source) avec source = 'IA' ou 'démonstration'."""
-    rep = _appel_claude(CONSIGNES[mode], texte)
+    rep = _appel_ia(CONSIGNES[mode], texte)
     return (rep, "IA") if rep else (MODELES[mode] % texte, "démonstration")
 
 
@@ -88,7 +139,7 @@ def faits_projet(p):
 
 def compte_rendu_ia(p):
     """Retourne (texte, source). En démonstration, compte rendu structuré construit à partir des données."""
-    rep = _appel_claude(CONSIGNE_CR, faits_projet(p))
+    rep = _appel_ia(CONSIGNE_CR, faits_projet(p))
     if rep:
         return rep, "IA"
     jalons = list(p.jalons.all())

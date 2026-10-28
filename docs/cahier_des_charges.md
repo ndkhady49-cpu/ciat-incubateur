@@ -56,7 +56,7 @@ Le présent projet vise à développer une **application web** permettant de gé
 
 ### 3.8 Assistant IA de rédaction (Priorité moyenne)
 - Trois modes : Reformuler, Pitch, Analyse SWOT.
-- Suggestion générée par l'API Anthropic (ou mode démonstration sans clé).
+- Suggestion générée par l'API Groq, offre gratuite, modèle gpt-oss-120b (ou Claude en option, ou mode démonstration sans clé).
 - Le texte n'est enregistré qu'après validation explicite par le porteur.
 - Marqueur « rédigé avec l'aide d'une IA » sur le dossier.
 
@@ -83,7 +83,7 @@ Le présent projet vise à développer une **application web** permettant de gé
 | Framework | Django 5.x |
 | Base de données | PostgreSQL (Neon) en production, SQLite en développement |
 | Stockage des fichiers | Cloudflare R2, bucket privé |
-| IA | API Anthropic (Claude) avec fallback mode démo |
+| IA | API Groq (gratuite, modèle `openai/gpt-oss-120b`), Claude en option, mode démonstration sans clé |
 | Export PDF | ReportLab |
 | Export Excel | openpyxl |
 | Serveur statique | WhiteNoise |

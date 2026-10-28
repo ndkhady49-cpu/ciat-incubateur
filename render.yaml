@@ -36,5 +36,8 @@ services:
         value: "1"
       - key: DEMO_PASSWORD
         sync: false
+      # Assistant IA : Groq (gratuit) par défaut, Claude en option
+      - key: GROQ_API_KEY
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false

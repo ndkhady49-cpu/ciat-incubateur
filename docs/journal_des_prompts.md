@@ -6,7 +6,7 @@ Ce document recense les prompts significatifs utilisés lors du développement e
 
 ## 1. Prompts intégrés dans l'application
 
-L'assistant IA de l'application utilise trois prompts prédéfinis, envoyés à l'API Anthropic (Claude) :
+L'assistant IA de l'application utilise trois prompts prédéfinis, envoyés à l'API Groq (modèle `openai/gpt-oss-120b`, offre gratuite ; l'API Claude reste utilisable en option) :
 
 ### Prompt système (commun à tous les modes)
 ```
