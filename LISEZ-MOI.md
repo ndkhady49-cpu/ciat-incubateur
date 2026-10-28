@@ -55,6 +55,8 @@ Démarrage : `gunicorn config.wsgi`.
 - `config/` : réglages, routes principales
 - `incubateur/` : models, views, forms, ia, admin, tests, commande `seed`
 - `templates/`, `static/` : pages et style (couleurs de l'ISEP, logo)
+- `docs/maquettes/` : 6 planches de maquettes (charte, parcours sur ordinateur et téléphone), PNG et PDF
+- `docs/communication/` : affiche A4, visuels réseaux sociaux et textes de publication (`publications.md`)
 - `media/` : pièces jointes (téléchargées uniquement via une vue protégée par rôle)
 
 ## Limites connues
