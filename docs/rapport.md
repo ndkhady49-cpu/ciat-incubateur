@@ -11,13 +11,14 @@ Ce rapport présente la conception, le développement, l'analyse des données et
 
 ## 2. Équipe et répartition des rôles
 
-Le travail a été réalisé par une équipe de trois apprenants. Chacun a porté un profil principal et a contribué aux autres volets.
+Le travail a été réalisé par une équipe de quatre apprenants. Le profil développeur, qui concentre la plus grande part du travail (application, base de données, sécurité, IA, déploiement), a été porté par deux membres ; chacun a aussi contribué aux autres volets.
 
 | Membre | Profil principal | Contributions |
 |---|---|---|
-| [Prénom Nom 1] | Développeur | Architecture Django, modèle de données, authentification et rôles, sécurité, intégration de l'IA, tests automatisés, déploiement sur Render |
-| [Prénom Nom 2] | Data analyst | Dictionnaire des données, jeu de données de démonstration, définition des indicateurs, tableau de bord et graphiques, contrôle de qualité (`manage.py analyse`), interprétation et recommandations |
-| [Prénom Nom 3] | Infographe | Identité visuelle conforme à la charte ISEP (palette brun et beige, typographie Inter), maquettes, page d'accueil, ergonomie sur ordinateur et téléphone, supports de communication |
+| Ibrahima Thiam | Développeur | Développement de la plateforme Django : architecture, modèle de données, authentification et rôles, sécurité, intégration de l'IA, tests automatisés, déploiement (Render, Neon, Cloudflare R2) |
+| Khady Ndiaye | Développeuse | Développement de la plateforme Django : architecture, modèle de données, authentification et rôles, sécurité, intégration de l'IA, tests automatisés, déploiement (Render, Neon, Cloudflare R2) |
+| Issa Diome | Data analyst | Dictionnaire des données, jeu de données de démonstration, définition des indicateurs, tableau de bord et graphiques, contrôle de qualité (`manage.py analyse`), interprétation et recommandations |
+| Ndeye Gnilane Sarr | Infographe | Identité visuelle conforme à la charte ISEP (palette brun et beige, typographie Inter), logo, maquettes, page d'accueil, ergonomie sur ordinateur et téléphone, supports de communication |
 
 Responsabilités partagées : rédaction du cahier des charges, scénarios utilisateurs, guide utilisateur, journal des prompts et préparation de la démonstration.
 

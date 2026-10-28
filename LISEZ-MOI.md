@@ -4,6 +4,10 @@ Dépôt de dossier et de documents, évaluation par un comité, affectation de m
 commentaires et alertes de retard, calendrier, suivi à 3 et 6 mois, tableau de bord, comptes rendus rédigés avec l'IA,
 exports PDF/Excel, assistant IA de rédaction. Backend Django 5, base SQLite, pages HTML (templates Django + CSS).
 
+## Équipe
+Ibrahima Thiam et Khady Ndiaye (développement), Issa Diome (données et analyse), Ndeye Gnilane Sarr (infographie).
+Répartition détaillée : `docs/rapport.md` § 2.
+
 ## Lancer (Python 3.10+)
 - **Windows** : double-clic sur `lancer.bat`
 - **Linux / Mac** : `./lancer.sh`
