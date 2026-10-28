@@ -71,6 +71,24 @@ h3{font-size:15px;font-weight:700;color:var(--brun-800)}
 .app-footer a{color:var(--doux)}
 .voile{display:none}
 
+/* ---------- Barre latérale pliable (ordinateur) ---------- */
+.sidebar,.app-main{transition:width var(--transition),margin-left var(--transition),transform var(--transition)}
+.plier{display:flex;align-items:center;gap:12px;margin:4px 12px 8px;padding:9px 12px;min-height:0;border-radius:10px;background:transparent;
+  border:1px solid rgba(255,255,255,.08);color:var(--brun-300);font-size:13.5px;font-weight:500;justify-content:flex-start}
+.plier:hover{background:rgba(255,255,255,.06);color:#fff;box-shadow:none}
+.plier .i{transition:transform var(--transition)}
+@media(min-width:961px){
+  html.side-pliee{--sidebar:76px}
+  html.side-pliee .brand{justify-content:center;padding:20px 0 18px}
+  html.side-pliee .brand div,html.side-pliee .nav a span,html.side-pliee .plier span,html.side-pliee .side-user .qui{display:none}
+  html.side-pliee .nav{padding:8px 10px}
+  html.side-pliee .nav a{justify-content:center;padding:11px 0}
+  html.side-pliee .nav-titre{font-size:0;padding:10px 0 4px;border-top:1px solid rgba(255,255,255,.08);margin:6px 8px 0}
+  html.side-pliee .plier{justify-content:center;margin:4px 10px 8px;padding:9px 0}
+  html.side-pliee .plier .i{transform:rotate(180deg)}
+  html.side-pliee .side-user{flex-direction:column;padding:12px 0;gap:8px}
+}
+
 /* ---------- En-tête de page ---------- */
 .page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
 .page-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -350,6 +368,7 @@ td a{color:var(--brun-800);font-weight:600;text-decoration:none}td a:hover{color
   body.menu-ouvert .sidebar{transform:none;box-shadow:var(--ombre-lg)}
   body.menu-ouvert .voile{display:block;position:fixed;inset:0;background:rgba(31,18,11,.45);z-index:50}
   .app-main{margin-left:0}
+  .plier{display:none}
   .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:40;background:var(--brun-800);color:#fff;padding:8px 12px}
   .topbar .brand{padding:0;gap:10px}.topbar .brand img{width:34px;height:34px}.topbar .brand b{font-size:15px}
   .content{padding:20px 16px 32px}
