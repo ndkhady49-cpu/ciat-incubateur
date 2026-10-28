@@ -24,7 +24,10 @@ au disque de Render, Neon et R2 **conservent** les données entre deux redéploi
 3. Noter :
    - l'**Access Key ID** → `R2_ACCESS_KEY_ID` ;
    - le **Secret Access Key** → `R2_SECRET_ACCESS_KEY` (affiché une seule fois) ;
-   - l'endpoint `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` → `R2_ENDPOINT` (sans le nom du bucket).
+   - l'adresse **S3 API** du bucket (R2 > bucket > **Settings**), **sans** le `/nom-du-bucket` final → `R2_ENDPOINT`.
+     Exemple de forme : `https://3f2a…(32 caractères)….r2.cloudflarestorage.com`. Ne pas recopier `<ACCOUNT_ID>` :
+     c'est l'emplacement de l'identifiant de votre compte Cloudflare. Une adresse mal formée est signalée dans le journal
+     Render au démarrage (« R2_ENDPOINT invalide »).
 
 ## 3. Variables d'environnement sur Render
 
@@ -34,7 +37,7 @@ Service `ciat-incubateur` > **Environment** :
 |---|---|
 | `DATABASE_URL` | chaîne de connexion Neon |
 | `R2_BUCKET` | `ciat-incubateur-fichiers` |
-| `R2_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| `R2_ENDPOINT` | adresse « S3 API » du bucket, sans le nom du bucket : `https://` + identifiant de compte (32 caractères) + `.r2.cloudflarestorage.com` |
 | `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | clés du jeton R2 |
 | `CIAT_ADMIN_EMAIL` | e-mail du coordonnateur réel |
 | `CIAT_ADMIN_PASSWORD` | mot de passe fort (12 caractères ou plus), à changer après la première connexion |

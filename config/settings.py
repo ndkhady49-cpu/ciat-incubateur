@@ -6,7 +6,9 @@ Variables d'environnement (voir LISEZ-MOI) :
 - R2_BUCKET, R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY : fichiers sur Cloudflare R2. Absentes : dossier media/
 - ANTHROPIC_API_KEY : assistant IA (facultatif)
 """
+import logging
 import os
+import re
 from pathlib import Path
 
 import dj_database_url
@@ -94,6 +96,10 @@ if os.environ.get("R2_BUCKET"):
         "querystring_auth": True,
         "file_overwrite": False,      # deux fichiers de même nom ne s'écrasent pas
     }}
+    if not re.fullmatch(r"https://[0-9a-f]{32}\.r2\.cloudflarestorage\.com/?", os.environ["R2_ENDPOINT"].strip()):
+        logging.getLogger("config").error(
+            "R2_ENDPOINT invalide : attendu https://<identifiant de compte Cloudflare, 32 caractères>"
+            ".r2.cloudflarestorage.com (adresse « S3 API » du bucket, sans le nom du bucket). Les envois de fichiers échoueront.")
 
 # Limites anti-abus (par processus) : tentatives de connexion et appels à l'IA
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

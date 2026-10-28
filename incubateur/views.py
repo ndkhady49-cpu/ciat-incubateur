@@ -3,6 +3,7 @@ calendrier, tableau de bord, comptes rendus, exports, assistant IA."""
 import calendar
 import datetime as dt
 import io
+import logging
 import os
 from functools import wraps
 
@@ -13,6 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -46,6 +48,17 @@ def projet_autorise(request, pk):
             or (u.role == "mentor" and p.mentor_id == u.id)):
         return p
     raise PermissionDenied
+
+
+logger = logging.getLogger(__name__)
+MSG_STOCKAGE = ("Le stockage des fichiers est momentanément indisponible : %s. "
+                "Réessayez plus tard ; la coordination a été prévenue par le journal du serveur.")
+
+
+def stockage_indisponible(request, quoi):
+    """Journalise l'erreur du stockage de fichiers (R2) et prévient l'utilisateur, au lieu d'une erreur 500."""
+    logger.exception("Stockage de fichiers indisponible (%s) : vérifier R2_ENDPOINT, R2_BUCKET et les clés R2.", quoi)
+    messages.error(request, MSG_STOCKAGE % quoi)
 
 
 # ---------- limites anti-abus ----------
@@ -159,6 +172,7 @@ def projet_form(request, pk=None):
     p = projet_autorise(request, pk) if pk else None
     if p and not p.editable:
         raise PermissionDenied
+    ancien_fichier = p.file.name if p else ""
     form = ProjetForm(request.POST or None, request.FILES or None, instance=p)
     if request.method == "POST" and form.is_valid():
         obj = form.save(commit=False)
@@ -166,7 +180,14 @@ def projet_form(request, pk=None):
             obj.owner = request.user
         else:
             obj.status = "soumis"
-        obj.save()
+        try:
+            with transaction.atomic():  # sous-transaction : l'échec du fichier n'empêche pas l'enregistrement qui suit
+                obj.save()
+        except Exception:
+            # Le dossier est enregistré sans la nouvelle pièce jointe plutôt que perdu
+            stockage_indisponible(request, "la pièce jointe n'a pas été enregistrée, ajoutez-la plus tard")
+            obj.file = ancien_fichier or None
+            obj.save()
         pc, manque = obj.completude()
         messages.success(request, "Dossier enregistré (%d %% complet)." % pc
                          + (" Manque : " + ", ".join(manque) if manque else ""))
@@ -296,8 +317,12 @@ def document_ajout(request, pk):
     if form.is_valid():
         d = form.save(commit=False)
         d.project, d.jalon, d.auteur = p, jalon, request.user
-        d.save()
-        messages.success(request, "Preuve ajoutée au jalon." if jalon else "Document ajouté au dossier.")
+        try:
+            with transaction.atomic():
+                d.save()
+            messages.success(request, "Preuve ajoutée au jalon." if jalon else "Document ajouté au dossier.")
+        except Exception:
+            stockage_indisponible(request, "le document n'a pas été enregistré")
     else:
         messages.error(request, "Document refusé : " + " ".join(e for errs in form.errors.values() for e in errs))
     return redirect("projet", pk=pk)
@@ -307,7 +332,11 @@ def document_ajout(request, pk):
 def document(request, pk):
     d = get_object_or_404(Document, pk=pk)
     projet_autorise(request, d.project_id)
-    return FileResponse(d.fichier.open("rb"), as_attachment=True, filename=os.path.basename(d.fichier.name))
+    try:
+        return FileResponse(d.fichier.open("rb"), as_attachment=True, filename=os.path.basename(d.fichier.name))
+    except Exception:
+        stockage_indisponible(request, "le fichier n'a pas pu être téléchargé")
+        return redirect("projet", pk=d.project_id)
 
 
 @role_required()
@@ -348,7 +377,11 @@ def fichier(request, pk):
     p = projet_autorise(request, pk)
     if not p.file:
         raise Http404
-    return FileResponse(p.file.open("rb"), as_attachment=True, filename=os.path.basename(p.file.name))
+    try:
+        return FileResponse(p.file.open("rb"), as_attachment=True, filename=os.path.basename(p.file.name))
+    except Exception:
+        stockage_indisponible(request, "le fichier n'a pas pu être téléchargé")
+        return redirect("projet", pk=p.pk)
 
 
 def pdf_response(titre, sections, nom_fichier):

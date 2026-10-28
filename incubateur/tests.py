@@ -294,6 +294,7 @@ class AuditTests(TestCase):
                    R2_ENDPOINT="https://compte.r2.cloudflarestorage.com", R2_ACCESS_KEY_ID="a", R2_SECRET_ACCESS_KEY="b")
         out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
         self.assertEqual(out.stdout.split(), ["django.db.backends.postgresql", "storages.backends.s3.S3Storage", "None"])
+        self.assertIn("R2_ENDPOINT invalide", out.stderr)  # « compte » n'est pas un identifiant Cloudflare
         env.pop("DJANGO_SECRET_KEY")
         out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
         self.assertIn("DJANGO_SECRET_KEY est obligatoire", out.stderr)
@@ -386,3 +387,35 @@ class AssistantGroqTests(TestCase):
         with mock.patch.dict(os.environ, {"IA_FOURNISSEUR": "groq"}):
             os.environ.pop("GROQ_API_KEY", None)
             self.assertIsNone(ia.fournisseur())
+
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class StockageIndisponibleTests(TestCase):
+    """Stockage de fichiers en panne (ex. R2_ENDPOINT mal configuré) : jamais d'erreur 500, le dossier est conservé."""
+    PANNE = "django.core.files.storage.FileSystemStorage.%s"
+
+    def setUp(self):
+        self.porteur = User.objects.create_user(username="p@x.sn", email="p@x.sn", password="Passw0rd!", role="porteur")
+        self.client.force_login(self.porteur)
+
+    def test_depot_dossier_sans_piece_jointe_si_stockage_en_panne(self):
+        data = dict(DONNEES, file=SimpleUploadedFile("fiche.pdf", b"%PDF-1.4"))
+        with mock.patch(self.PANNE % "save", side_effect=ValueError("Invalid endpoint")), self.assertLogs("incubateur.views", "ERROR"):
+            r = self.client.post(reverse("projet_nouveau"), data, follow=True)
+        p = Projet.objects.get(title="Test projet")
+        self.assertFalse(p.file)
+        self.assertContains(r, "stockage des fichiers est momentanément indisponible")
+
+    def test_document_et_telechargement_si_stockage_en_panne(self):
+        p = Projet.objects.create(owner=self.porteur, title="T", domain="TIC, numérique, IA et données")
+        with mock.patch(self.PANNE % "save", side_effect=ValueError("Invalid endpoint")), self.assertLogs("incubateur.views", "ERROR"):
+            r = self.client.post(reverse("document_ajout", args=[p.pk]),
+                                 {"titre": "Budget", "fichier": SimpleUploadedFile("b.pdf", b"%PDF")}, follow=True)
+        self.assertEqual(Document.objects.count(), 0)
+        self.assertContains(r, "le document n&#x27;a pas été enregistré")
+        self.client.post(reverse("document_ajout", args=[p.pk]), {"titre": "Budget", "fichier": SimpleUploadedFile("b.pdf", b"%PDF")})
+        d = Document.objects.get()
+        with mock.patch(self.PANNE % "open", side_effect=ValueError("Invalid endpoint")), self.assertLogs("incubateur.views", "ERROR"):
+            r = self.client.get(reverse("document", args=[d.pk]))
+        self.assertRedirects(r, reverse("projet", args=[p.pk]))
