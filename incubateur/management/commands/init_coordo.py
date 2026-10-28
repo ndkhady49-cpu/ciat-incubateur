@@ -4,7 +4,10 @@ CIAT_ADMIN_EMAIL, CIAT_ADMIN_PASSWORD et CIAT_ADMIN_NOM.
 - Compte existant mais pas encore coordonnateur administrateur (par exemple inscrit comme porteur) : il est promu
   et reçoit le mot de passe CIAT_ADMIN_PASSWORD, pour qu'une inscription anticipée avec cet e-mail ne donne
   jamais l'accès administrateur à quelqu'un d'autre.
-- Compte déjà coordonnateur administrateur : rien n'est modifié (un mot de passe changé ensuite est conservé)."""
+- Compte déjà coordonnateur administrateur : rien n'est modifié (un mot de passe changé ensuite est conservé),
+  sauf si CIAT_ADMIN_RESET=1 : le mot de passe redevient CIAT_ADMIN_PASSWORD (récupération sans terminal ;
+  retirer ensuite la variable).
+Les espaces en début et fin de CIAT_ADMIN_PASSWORD (copier-coller) sont ignorés."""
 import os
 
 from django.contrib.auth.password_validation import validate_password
@@ -19,12 +22,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         email = os.environ.get("CIAT_ADMIN_EMAIL", "").strip().lower()
-        mdp = os.environ.get("CIAT_ADMIN_PASSWORD", "")
+        mdp = os.environ.get("CIAT_ADMIN_PASSWORD", "").strip()
+        reset = os.environ.get("CIAT_ADMIN_RESET") == "1"
         if not email or not mdp:
             self.stdout.write("CIAT_ADMIN_EMAIL / CIAT_ADMIN_PASSWORD absents : aucun compte créé.")
             return
         u = User.objects.filter(username=email).first()
-        if u and u.role == "coordo" and u.is_superuser and u.is_active:
+        if u and u.role == "coordo" and u.is_superuser and u.is_active and not reset:
             self.stdout.write("Le compte coordonnateur %s existe déjà." % email)
             return
         try:
@@ -36,7 +40,8 @@ class Command(BaseCommand):
             u.set_password(mdp)
             u.save()
             self.stdout.write(self.style.SUCCESS(
-                "Compte existant %s promu coordonnateur ; mot de passe = CIAT_ADMIN_PASSWORD." % email))
+                "Compte %s : rôle coordonnateur administrateur, mot de passe = CIAT_ADMIN_PASSWORD%s." % (
+                    email, " (CIAT_ADMIN_RESET=1 : retirez maintenant cette variable)" if reset else "")))
             return
         User.objects.create_user(username=email, email=email, password=mdp, role="coordo",
                                  first_name=os.environ.get("CIAT_ADMIN_NOM", "Coordonnateur CIAT"),

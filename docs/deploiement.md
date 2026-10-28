@@ -64,6 +64,9 @@ Vérifications après le déploiement :
 
 - **Créer un mentor ou un membre du comité** : `/admin/` > Utilisateurs > Ajouter. L'identifiant est l'e-mail ;
   choisir le rôle et un mot de passe provisoire, que la personne changera depuis **Mon profil**.
+- **Mot de passe du coordonnateur perdu ou refusé** : ajouter `CIAT_ADMIN_RESET=1` dans Render (et vérifier
+  `CIAT_ADMIN_PASSWORD`), laisser le redéploiement se faire, se connecter, puis **supprimer** `CIAT_ADMIN_RESET`.
+  Après 5 essais erronés, la connexion est bloquée 15 minutes (un redéploiement lève aussi le blocage).
 - **Mot de passe oublié** : le coordonnateur le réinitialise dans `/admin/` (fiche de l'utilisateur > formulaire
   « mot de passe »).
 - **Retirer la démonstration** après l'évaluation : mettre `SEED_DEMO` à `supprimer` et redéployer

@@ -254,6 +254,11 @@ class AuditTests(TestCase):
             call_command("init_coordo", stdout=io.StringIO())  # déjà coordonnateur : mot de passe conservé
             self.porteur.refresh_from_db()
             self.assertTrue(self.porteur.check_password("Nouveau-Mot-De-Passe-26"))
+        with mock.patch.dict(os.environ, {"CIAT_ADMIN_EMAIL": "p@x.sn", "CIAT_ADMIN_PASSWORD": " Baobab-Diamniadio-26\n",
+                                          "CIAT_ADMIN_RESET": "1"}):
+            call_command("init_coordo", stdout=io.StringIO())  # récupération : mot de passe réimposé, espaces ignorés
+            self.porteur.refresh_from_db()
+            self.assertTrue(self.porteur.check_password("Baobab-Diamniadio-26"))
         with mock.patch.dict(os.environ):
             os.environ.pop("DEMO_PASSWORD", None)
             call_command("seed", stdout=io.StringIO())  # DEBUG=False en test : refus sans mot de passe
