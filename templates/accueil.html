@@ -8,23 +8,25 @@
 <a class="brand" href="/"><img src="{% static 'logo-mark.svg' %}" alt=""><div><b>CIAT</b><span>Incubateur · ISEP Diamniadio</span></div></a>
 <nav class="pub-nav">
 <a class="lien" href="#missions">Missions</a><a class="lien" href="#processus">Parcours</a><a class="lien" href="#domaines">Domaines</a>
-<a href="{% url 'login' %}" class="bt bt-contour">Se connecter</a>
-<a href="{% url 'register' %}" class="bt bt-clair">Déposer un projet</a>
+<a href="{% url 'login' %}" class="bt b2">Se connecter</a>
+<a href="{% url 'register' %}" class="bt">Déposer un projet</a>
 </nav></header>
 
-<section class="hero"><div class="hero-content">
+<section class="hero"><div class="hero-content"><div>
 <div class="hero-badge"><svg class="i i-sm"><use href="#i-graduation"/></svg>ISEP Amadou Trawaré de Diamniadio</div>
 <h1 class="hero-title">Transformez votre idée en <span class="hero-accent">projet incubé</span>.</h1>
 <p class="hero-desc">Le Centre d'Innovation, d'Application et de Transfert accompagne les porteurs de projets : sélection par un comité, mentorat, jalons et suivi après l'incubation.</p>
 <div class="hero-actions">
 <a href="{% url 'register' %}" class="bt bt-clair bt-lg">Déposer mon projet<svg class="i"><use href="#i-arrow-right"/></svg></a>
-<a href="#processus" class="bt bt-contour bt-lg">Découvrir le parcours</a></div>
+<a href="#processus" class="bt bt-contour bt-lg">Découvrir le parcours</a></div></div>
+<figure class="hero-photo"><img src="{% static 'campus.jpg' %}" alt="Vue aérienne du campus de l'ISEP Amadou Trawaré de Diamniadio" width="576" height="276">
+<figcaption><svg class="i i-sm"><use href="#i-building"/></svg>ISEP Amadou Trawaré de Diamniadio</figcaption></figure></div>
 <div class="hero-stats">
 <div><span class="hero-stat-num">7</span><span class="hero-stat-label">Domaines</span></div>
 <div><span class="hero-stat-num">{{ nb_projets }}</span><span class="hero-stat-label">Projets déposés</span></div>
 <div><span class="hero-stat-num">{{ nb_mentors }}</span><span class="hero-stat-label">Mentors</span></div>
 <div><span class="hero-stat-num">{{ taux_sel }} %</span><span class="hero-stat-label">Taux de sélection</span></div>
-</div></div></section>
+</div></section>
 
 <section class="section" id="missions"><div class="section-inner">
 <div class="section-head"><p class="eyebrow">Nos missions</p><h2 class="section-title">De l'idée au prototype, puis au marché</h2>
